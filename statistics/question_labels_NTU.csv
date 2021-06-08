@@ -1,0 +1,169 @@
+﻿Questionnaire,Item,Label,Reverse,Dimension,Description,Category
+News,1,Q76,0,fake,Police responds to lockdown street party in the UK,Belief
+News,1,Q76,0,fake,Police responds to lockdown street party in the UK,Familiarity
+News,1,Q76,0,fake,Police responds to lockdown street party in the UK,Importance
+News,2,Q77,0,fake,The first volunteer to take part in a UK vaccine trial had died.,Belief
+News,2,Q77,0,fake,The first volunteer to take part in a UK vaccine trial had died.,Familiarity
+News,2,Q77,0,fake,The first volunteer to take part in a UK vaccine trial had died.,Importance
+News,3,Q78,0,fake,Changes introduced in UK law give the government the power to enforce vaccinations as a result of the coronavirus outbreak ,Belief
+News,3,Q78,0,fake,Changes introduced in UK law give the government the power to enforce vaccinations as a result of the coronavirus outbreak ,Familiarity
+News,3,Q78,0,fake,Changes introduced in UK law give the government the power to enforce vaccinations as a result of the coronavirus outbreak ,Importance
+News,4,Q79,0,fake,Coronavirus is caused by radiation emitted from 5G towers,Belief
+News,4,Q79,0,fake,Coronavirus is caused by radiation emitted from 5G towers,Familiarity
+News,4,Q79,0,fake,Coronavirus is caused by radiation emitted from 5G towers,Importance
+News,5,Q80,0,fake,The coronavirus was intentionally developed in a laboratory.,Belief
+News,5,Q80,0,fake,The coronavirus was intentionally developed in a laboratory.,Familiarity
+News,5,Q80,0,fake,The coronavirus was intentionally developed in a laboratory.,Importance
+News,6,Q81,0,fake,The consumption of exotic wild animals led to the coronavirus outbreak.,Belief
+News,6,Q81,0,fake,The consumption of exotic wild animals led to the coronavirus outbreak.,Familiarity
+News,6,Q81,0,fake,The consumption of exotic wild animals led to the coronavirus outbreak.,Importance
+News,7,Q82,0,fake,Parcels from China can spread the coronavirus.,Belief
+News,7,Q82,0,fake,Parcels from China can spread the coronavirus.,Familiarity
+News,7,Q82,0,fake,Parcels from China can spread the coronavirus.,Importance
+News,8,Q83,0,fake,It has been confirmed that pets can spread the coronavirus.,Belief
+News,8,Q83,0,fake,It has been confirmed that pets can spread the coronavirus.,Familiarity
+News,8,Q83,0,fake,It has been confirmed that pets can spread the coronavirus.,Importance
+News,9,Q84,0,fake,Reinfection after having recovered proved to be even deadlier.,Belief
+News,9,Q84,0,fake,Reinfection after having recovered proved to be even deadlier.,Familiarity
+News,9,Q84,0,fake,Reinfection after having recovered proved to be even deadlier.,Importance
+News,10,Q85,0,fake,Drinking warm water helps prevent COVID-19 as stomach acid kills virus. -,Belief
+News,10,Q85,0,fake,Drinking warm water helps prevent COVID-19 as stomach acid kills virus. -,Familiarity
+News,10,Q85,0,fake,Drinking warm water helps prevent COVID-19 as stomach acid kills virus. -,Importance
+News,11,Q86,0,fake,The cure for virus is already known but not produced on a large scale.,Belief
+News,11,Q86,0,fake,The cure for virus is already known but not produced on a large scale.,Familiarity
+News,11,Q86,0,fake,The cure for virus is already known but not produced on a large scale.,Importance
+News,12,Q87,0,real,COVID-19 collapse exceeds any recession in the last 150 years.,Belief
+News,12,Q87,0,real,COVID-19 collapse exceeds any recession in the last 150 years.,Familiarity
+News,12,Q87,0,real,COVID-19 collapse exceeds any recession in the last 150 years.,Importance
+News,13,Q88,0,real,Tourists in India forced to write ‘sorry’ 500 times over coronavirus lockdown breach.,Belief
+News,13,Q88,0,real,Tourists in India forced to write ‘sorry’ 500 times over coronavirus lockdown breach.,Familiarity
+News,13,Q88,0,real,Tourists in India forced to write ‘sorry’ 500 times over coronavirus lockdown breach.,Importance
+News,14,Q89,0,real,World Health Organization calls for honest leadership from US and China regarding COVID-19.,Belief
+News,14,Q89,0,real,World Health Organization calls for honest leadership from US and China regarding COVID-19.,Familiarity
+News,14,Q89,0,real,World Health Organization calls for honest leadership from US and China regarding COVID-19.,Importance
+News,15,Q90,0,real,Beijing tightens grip over research on the origins of the novel coronavirus.,Belief
+News,15,Q90,0,real,Beijing tightens grip over research on the origins of the novel coronavirus.,Familiarity
+News,15,Q90,0,real,Beijing tightens grip over research on the origins of the novel coronavirus.,Importance
+News,16,Q91,0,real,Ibuprofen is tested as a treatment,Belief
+News,16,Q91,0,real,Ibuprofen is tested as a treatment,Familiarity
+News,16,Q91,0,real,Ibuprofen is tested as a treatment,Importance
+News,17,Q92,0,real,"UK arrivals could face £1,000 fines if they break quarantine ",Belief
+News,17,Q92,0,real,"UK arrivals could face £1,000 fines if they break quarantine ",Familiarity
+News,17,Q92,0,real,"UK arrivals could face £1,000 fines if they break quarantine ",Importance
+News,18,Q93,0,real,The coronavirus can spread beyond 1.5m if a carrier is exercising outdoors.,Belief
+News,18,Q93,0,real,The coronavirus can spread beyond 1.5m if a carrier is exercising outdoors.,Familiarity
+News,18,Q93,0,real,The coronavirus can spread beyond 1.5m if a carrier is exercising outdoors.,Importance
+News,19,Q94,0,real,N95 masks are more effective than surgical masks at protecting healthy individuals from being infected.,Belief
+News,19,Q94,0,real,N95 masks are more effective than surgical masks at protecting healthy individuals from being infected.,Familiarity
+News,19,Q94,0,real,N95 masks are more effective than surgical masks at protecting healthy individuals from being infected.,Importance
+News,20,Q95,0,real,A UK hospital plans on testing a potential coronavirus treatment by using plasma from recovered patients,Belief
+News,20,Q95,0,real,A UK hospital plans on testing a potential coronavirus treatment by using plasma from recovered patients,Familiarity
+News,20,Q95,0,real,A UK hospital plans on testing a potential coronavirus treatment by using plasma from recovered patients,Importance
+News,21,Q96,0,real,Being young and healthy does not protect you from developing a serious COVID-19 infection.,Belief
+News,21,Q96,0,real,Being young and healthy does not protect you from developing a serious COVID-19 infection.,Familiarity
+News,21,Q96,0,real,Being young and healthy does not protect you from developing a serious COVID-19 infection.,Importance
+News,22,Q97,0,real,"The virus can potentially infect anybody, regardless of age, sex or race.",Belief
+News,22,Q97,0,real,"The virus can potentially infect anybody, regardless of age, sex or race.",Familiarity
+News,22,Q97,0,real,"The virus can potentially infect anybody, regardless of age, sex or race.",Importance
+CMQ,1,Q150_1,0,,"I think that many very important things happen in the world, which the public is never informed about.",
+CMQ,2,Q151_1,0,,I think that politicians usually do not tell us the true motives for their decisions.,
+CMQ,3,Q152_1,0,,I think that government agencies closely monitor all citizens.,
+CMQ,4,Q153_1,0,,I think that events which superficially seem to lack a connection are often the result of secret activities.,
+CMQ,5,Q154_1,0,,I think there are secret organizations that greatly influence political decisions.,
+PBS,1,Q133_1,0,Religious_Belief,The soul continues to exist though the body may die.,
+PBS,2,Q134_1,0,Psi,Some individuals are able to levitate (lift) objects through mental forces.,
+PBS,3,Q135_1,0,Spiritualism,Your mind or soul can leave your body and travel (astral projection).,
+PBS,4,Q136_1,0,Precognition,Astrology is a way to accurately predict the future.,
+PBS,5,Q137_1,0,Religious_Belief,There is a devil. ,
+PBS,6,Q138_1,0,Psi,"Psychokinesis, the movement of objects through psychic powers, does exist.",
+PBS,7,Q139_1,0,Spiritualism,"During altered states, such as sleep or trances, the spirit can leave the body.",
+PBS,8,Q140_1,0,Precognition,The horoscope accurately tells a person’s future.,
+PBS,9,Q141_1,0,Religious_Belief,I believe in God.,
+PBS,10,Q142_1,0,Psi,A person’s thoughts can influence the movement of a physical object.,
+PBS,11,Q143_1,0,Spiritualism,Reincarnation does occur.,
+PBS,12,Q144_1,0,Precognition,Some psychics can accurately predict the future.,
+PBS,13,Q145_1,0,Religious_Belief,There is a heaven and a hell.,
+PBS,14,Q146_1,1,Psi,Mind reading is not possible.,
+PBS,15,Q147_1,0,Spiritualism,It is possible to communicate with the dead.,
+PBS,16,Q148_1,0,Precognition,Some people have an unexplained ability to predict the future.,
+GPTS,1,Q114_1,0,Reference,I spent time thinking about friends gossiping about me.,
+GPTS,2,Q115_1,0,Reference,I often heard people referring to me.,
+GPTS,3,Q116_1,0,Reference,I have been upset by friends and colleagues judging me critically.,
+GPTS,4,Q117_1,0,Reference,People definitely laughed at me behind my back.,
+GPTS,5,Q118_1,0,Reference,I have been thinking a lot about people avoiding me.,
+GPTS,6,Q119_1,0,Reference,People have been dropping hints for me,
+GPTS,7,Q120_1,0,Reference,I believed that certain people were not what they seemed.,
+GPTS,8,Q121_1,0,Reference,People talking about me behind my back upset me.,
+GPTS,9,Q122_1,0,Persecution,"Certain individuals have had it in (i.e., have bad intentions) for me.",
+GPTS,10,Q123_1,0,Persecution,"People wanted me to feel threatened, so they stared at me.",
+GPTS,11,Q124_1,0,Persecution,I was certain people did things in order to annoy me.,
+GPTS,12,Q125_1,0,Persecution,I was convinced there was a conspiracy against me.,
+GPTS,13,Q126_1,0,Persecution,I was sure someone wanted to hurt me.,
+GPTS,14,Q127_1,0,Persecution,I couldn’t stop thinking about people wanting to confuse me.,
+GPTS,15,Q128_1,0,Persecution,I was distressed by being persecuted.,
+GPTS,16,Q129_1,0,Persecution,It was difficult to stop thinking about people wanting to make me feel bad.,
+GPTS,17,Q130_1,0,Persecution,People have been hostile towards me on purpose,
+GPTS,18,Q131_1,0,Persecution,I was angry that someone wanted to hurt me.,
+BSCS,1,Q100_1,1,,I am good at resisting temptation.,
+BSCS,2,Q101_1,0,,I have a hard time breaking bad habits,
+BSCS,3,Q102_1,0,,I am lazy.,
+BSCS,4,Q103_1,0,,I say inappropriate things,
+BSCS,5,Q104_1,0,,"I do certain things that are bad for me, if they are fun ",
+BSCS,6,Q105_1,0,,I wish I had more self-discipline,
+BSCS,7,Q106_1,0,,Pleasure and fun sometimes keep me from getting work done.,
+BSCS,8,Q107_1,0,,I have trouble concentrating.,
+BSCS,9,Q108_1,1,,I am able to work effectively toward long-term goals.,
+BSCS,10,Q109_1,0,,"Sometimes I can’t stop myself from doing something, even if I know it is wrong.",
+BSCS,11,Q110_1,1,,I often act without thinking through all the alternatives.,
+BSCS,12,Q111_1,1,,I refuse things that are bad for me.,
+BSCS,13,Q112_1,0,,People would say that I have iron self-discipline. ,
+SPQ,1,Q51,0,Interpersonal ,People sometimes find me aloof and distant.,
+SPQ,2,Q52,0,Cognitive-Perceptual,"Have you ever had the sense that some person or force is around you, even though you cannot see anyone? ",
+SPQ,3,Q53,0,Disorganized,People sometimes comment on my unusual mannerisms and habits.,
+SPQ,4,Q54,0,Cognitive-Perceptual,Are you sometimes sure that other people can tell what you are thinking? ,
+SPQ,5,Q55,0,Cognitive-Perceptual,Have you ever noticed a common event or object that seemed to be a special sign for you?,
+SPQ,6,Q56,0,Disorganized,Some people think that I am a very bizarre person.,
+SPQ,7,Q57,0,Interpersonal ,I feel I have to be on the guard even with friends.,
+SPQ,8,Q58,0,Disorganized,Some people find me a bit vague and elusive during a conversation.,
+SPQ,9,Q59,0,Cognitive-Perceptual,Do you often pick up hidden threats or put-downs from what people say or do?,
+SPQ,10,Q60,0,Cognitive-Perceptual,When shopping do you get the feeling that other people are taking notice of you?,
+SPQ,11,Q62,0,Interpersonal ,I feel very uncomfortable in social situations involving unfamiliar people.,
+SPQ,12,Q63,0,Cognitive-Perceptual,"Have you had experiences with astrology, seeing the future, UFOs, ESP, or a sixth sense?",
+SPQ,13,Q64,0,Disorganized,I sometimes used words in unusual ways.,
+SPQ,14,Q65,0,Interpersonal ,Have you found that it is best not to let other people know too much about you?,
+SPQ,15,Q66,0,Interpersonal ,I tend to keep in the background on social occasions.,
+SPQ,16,Q67,0,Cognitive-Perceptual,Do you ever suddenly feel distracted by distant sounds that you are not normally aware of?,
+SPQ,17,Q68,0,Cognitive-Perceptual,Do you often have to keep an eye out to stop people from taking advantage of you?,
+SPQ,18,Q69,0,Interpersonal ,Do you feel that you are unable to get “close” to people?,
+SPQ,19,Q70,0,Disorganized,"I am an odd, unusual person",
+SPQ,20,Q71,0,Disorganized,I find it hard to communicate clearly what I want to say to people.,
+SPQ,21,Q72,0,Interpersonal ,I feel very uneasy talking to people I do not know well.,
+SPQ,22,Q73,0,Interpersonal ,I tend to keep my feelings to myself.,
+IUS,1,Q36_1,0,Prospective_Anxiety,Unforeseen events upset me greatly.,
+IUS,2,Q37_1,0,Prospective_Anxiety,It frustrates me not having all the information I need.,
+IUS,3,Q38_1,0,Prospective_Anxiety,One should always look ahead so as to avoid surprises.,
+IUS,4,Q39_1,0,Prospective_Anxiety,"A small, unforeseen event can spoil everything, even with the best of planning.",
+IUS,5,Q40_1,0,Prospective_Anxiety,I always want to know what the future has in store for me,
+IUS,6,Q41_1,0,Prospective_Anxiety,I can’t stand being taken by surprise,
+IUS,7,Q42_1,0,Prospective_Anxiety,I should be able to organize everything in advance.,
+IUS,8,Q43_1,0,Inhibitory_Anxiety,Uncertainty keeps me from living a full life,
+IUS,9,Q44_1,0,Inhibitory_Anxiety,"When it’s time to act, uncertainty paralyses me.",
+IUS,10,Q45_1,0,Inhibitory_Anxiety,When I am uncertain I can’t function very well,
+IUS,11,Q46_1,0,Inhibitory_Anxiety,The smallest doubt can stop me from acting.,
+IUS,12,Q47_1,0,Inhibitory_Anxiety,I must get away from all uncertain situations,
+MAIA2,1,Q21_1,0,Noticing,When I am tense I notice where the tension is located in my body. ,
+MAIA2,2,Q22_1,0,Noticing,I notice when I am uncomfortable in my body.,
+MAIA2,3,Q23_1,0,Noticing,I notice where in my body I am comfortable.,
+MAIA2,4,Q24_1,0,Noticing,"I notice changes in my breathing, such as whether it slows down or speeds up.",
+MAIA2,5,Q25_1,1,Not_Worrying,"When I feel physical pain, I become upset.",
+MAIA2,6,Q26_1,1,Not_Worrying,I start to worry that something is wrong if I feel any discomfort.,
+MAIA2,7,Q27_1,0,Not_Worrying,I can notice an unpleasant body sensation without worrying about it.,
+MAIA2,8,Q28_1,0,Not_Worrying,I can stay calm and not worry when I have feelings of discomfort or pain.,
+MAIA2,9,Q29_1,1,Not_Worrying,When I am in discomfort or pain I can’t get it out of my mind.,
+MAIA2,10,Q30_1,0,Emotional_Awareness,I notice how my body changes when I am angry.,
+MAIA2,11,Q31_1,0,Emotional_Awareness,When something is wrong in my life I can feel it in my body.,
+MAIA2,12,Q32_1,0,Emotional_Awareness,I notice that my body feels different after a peaceful experience.,
+MAIA2,13,Q33_1,0,Emotional_Awareness,I notice that my breathing becomes free and easy when I feel comfortable.,
+MAIA2,14,Q34_1,0,Emotional_Awareness,I notice how my body changes when I feel happy / joyful.,
+PANAS,1,Q159,0,State,Indicate to what extent you feel currently regarding the COVID-19 pandemic. ,
+PANAS,2,Q160,0,Trait,Indicate to what extent you have been feeling these emotions before the onset of the COVID-19 pandemic ,

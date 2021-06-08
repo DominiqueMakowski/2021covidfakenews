@@ -1,0 +1,169 @@
+﻿Questionnaire,Item,Label,Reverse,Dimension,Description,Category
+News,1,3.2,0,Fake,Foreign workers who have been quarantined are currently not being paid their salaries.,Belief
+News,1,3.2,0,Fake,Foreign workers who have been quarantined are currently not being paid their salaries.,Familiarity
+News,1,3.2,0,Fake,Foreign workers who have been quarantined are currently not being paid their salaries.,Importance
+News,2,3.3,0,Fake,Contact tracing is now out of control: Singapore government can no longer trace the source of infection.,Belief
+News,2,3.3,0,Fake,Contact tracing is now out of control: Singapore government can no longer trace the source of infection.,Familiarity
+News,2,3.3,0,Fake,Contact tracing is now out of control: Singapore government can no longer trace the source of infection.,Importance
+News,3,3.4,0,Fake,Ministry of Manpower says employers are at fault for dirty foreign dormitories.,Belief
+News,3,3.4,0,Fake,Ministry of Manpower says employers are at fault for dirty foreign dormitories.,Familiarity
+News,3,3.4,0,Fake,Ministry of Manpower says employers are at fault for dirty foreign dormitories.,Importance
+News,4,3.5,0,Fake,"Student returned from overseas placed on SHN, but sneaked out clubbing before testing positive.",Belief
+News,4,3.5,0,Fake,"Student returned from overseas placed on SHN, but sneaked out clubbing before testing positive.",Familiarity
+News,4,3.5,0,Fake,"Student returned from overseas placed on SHN, but sneaked out clubbing before testing positive.",Importance
+News,5,3.6,0,Fake,The coronavirus was intentionally developed in a laboratory.,Belief
+News,5,3.6,0,Fake,The coronavirus was intentionally developed in a laboratory.,Familiarity
+News,5,3.6,0,Fake,The coronavirus was intentionally developed in a laboratory.,Importance
+News,6,3.7,0,Fake,The consumption of exotic wild animals led to the coronavirus outbreak.,Belief
+News,6,3.7,0,Fake,The consumption of exotic wild animals led to the coronavirus outbreak.,Familiarity
+News,6,3.7,0,Fake,The consumption of exotic wild animals led to the coronavirus outbreak.,Importance
+News,7,3.8,0,Fake,Parcels from China can spread the coronavirus.,Belief
+News,7,3.8,0,Fake,Parcels from China can spread the coronavirus.,Familiarity
+News,7,3.8,0,Fake,Parcels from China can spread the coronavirus.,Importance
+News,8,3.9,0,Fake,It has been confirmed that pets can spread the coronavirus.,Belief
+News,8,3.9,0,Fake,It has been confirmed that pets can spread the coronavirus.,Familiarity
+News,8,3.9,0,Fake,It has been confirmed that pets can spread the coronavirus.,Importance
+News,9,3.1,0,Fake,COVID-19 hidden danger: Reinfection after having recovered proved to be even deadlier.,Belief
+News,9,3.1,0,Fake,COVID-19 hidden danger: Reinfection after having recovered proved to be even deadlier.,Familiarity
+News,9,3.1,0,Fake,COVID-19 hidden danger: Reinfection after having recovered proved to be even deadlier.,Importance
+News,10,3.11,0,Fake,Drinking warm water helps prevent COVID-19 as stomach acid kills virus.,Belief
+News,10,3.11,0,Fake,Drinking warm water helps prevent COVID-19 as stomach acid kills virus.,Familiarity
+News,10,3.11,0,Fake,Drinking warm water helps prevent COVID-19 as stomach acid kills virus.,Importance
+News,11,3.12,0,Fake,The cure for virus is already known but not produced on a large scale.,Belief
+News,11,3.12,0,Fake,The cure for virus is already known but not produced on a large scale.,Familiarity
+News,11,3.12,0,Fake,The cure for virus is already known but not produced on a large scale.,Importance
+News,12,3.13,0,Real,COVID-19 collapse exceeds any recession in the last 150 years.,Belief
+News,12,3.13,0,Real,COVID-19 collapse exceeds any recession in the last 150 years.,Familiarity
+News,12,3.13,0,Real,COVID-19 collapse exceeds any recession in the last 150 years.,Importance
+News,13,3.14,0,Real,Tourists in India forced to write ‘sorry’ 500 times over coronavirus lockdown breach.,Belief
+News,13,3.14,0,Real,Tourists in India forced to write ‘sorry’ 500 times over coronavirus lockdown breach.,Familiarity
+News,13,3.14,0,Real,Tourists in India forced to write ‘sorry’ 500 times over coronavirus lockdown breach.,Importance
+News,14,3.15,0,Real,World Health Organization calls for honest leadership from US and China regarding COVID-19.,Belief
+News,14,3.15,0,Real,World Health Organization calls for honest leadership from US and China regarding COVID-19.,Familiarity
+News,14,3.15,0,Real,World Health Organization calls for honest leadership from US and China regarding COVID-19.,Importance
+News,15,3.16,0,Real,Beijing tightens grip over research on the origins of the novel coronavirus.,Belief
+News,15,3.16,0,Real,Beijing tightens grip over research on the origins of the novel coronavirus.,Familiarity
+News,15,3.16,0,Real,Beijing tightens grip over research on the origins of the novel coronavirus.,Importance
+News,16,3.17,0,Real,Many seniors still shop for groceries at markets despite PM Lee urging them to stay home.,Belief
+News,16,3.17,0,Real,Many seniors still shop for groceries at markets despite PM Lee urging them to stay home.,Familiarity
+News,16,3.17,0,Real,Many seniors still shop for groceries at markets despite PM Lee urging them to stay home.,Importance
+News,17,3.18,0,Real,"Jail terms, fines for those who breach COVID-19 measures in Singapore.",Belief
+News,17,3.18,0,Real,"Jail terms, fines for those who breach COVID-19 measures in Singapore.",Familiarity
+News,17,3.18,0,Real,"Jail terms, fines for those who breach COVID-19 measures in Singapore.",Importance
+News,18,3.19,0,Real,The coronavirus can spread beyond 1.5m if a carrier is exercising outdoors.,Belief
+News,18,3.19,0,Real,The coronavirus can spread beyond 1.5m if a carrier is exercising outdoors.,Familiarity
+News,18,3.19,0,Real,The coronavirus can spread beyond 1.5m if a carrier is exercising outdoors.,Importance
+News,19,3.2,0,Real,N95 masks are more effective than surgical masks at protecting healthy individuals from being infected.,Belief
+News,19,3.2,0,Real,N95 masks are more effective than surgical masks at protecting healthy individuals from being infected.,Familiarity
+News,19,3.2,0,Real,N95 masks are more effective than surgical masks at protecting healthy individuals from being infected.,Importance
+News,20,3.21,0,Real,Recovered COVID-19 patients in Singapore to donate blood for plasma therapy treatment.,Belief
+News,20,3.21,0,Real,Recovered COVID-19 patients in Singapore to donate blood for plasma therapy treatment.,Familiarity
+News,20,3.21,0,Real,Recovered COVID-19 patients in Singapore to donate blood for plasma therapy treatment.,Importance
+News,21,3.22,0,Real,Being young and healthy does not protect you from developing a serious COVID-19 infection.,Belief
+News,21,3.22,0,Real,Being young and healthy does not protect you from developing a serious COVID-19 infection.,Familiarity
+News,21,3.22,0,Real,Being young and healthy does not protect you from developing a serious COVID-19 infection.,Importance
+News,22,3.23,0,Real,"The virus can potentially infect anybody, regardless of age, sex or race.",Belief
+News,22,3.23,0,Real,"The virus can potentially infect anybody, regardless of age, sex or race.",Familiarity
+News,22,3.23,0,Real,"The virus can potentially infect anybody, regardless of age, sex or race.",Importance
+CMQ,1,6.2,0,,"I think that many very important things happen in the world, which the public is never informed about.",
+CMQ,2,6.3,0,,I think that politicians usually do not tell us the true motives for their decisions.,
+CMQ,3,6.4,0,,I think that government agencies closely monitor all citizens.,
+CMQ,4,6.5,0,,I think that events which superficially seem to lack a connection are often the result of secret activities.,
+CMQ,5,6.6,0,,I think there are secret organizations that greatly influence political decisions.,
+PBS,1,7.2,0,Religious_Belief,The soul continues to exist though the body may die.,
+PBS,2,7.3,0,Psi,Some individuals are able to levitate (lift) objects through mental forces.,
+PBS,3,7.4,0,Spiritualism,Your mind or soul can leave your body and travel (astral projection).,
+PBS,4,7.5,0,Precognition,Astrology is a way to accurately predict the future.,
+PBS,5,7.6,0,Religious_Belief,There is a devil. ,
+PBS,6,7.7,0,Psi,"Psychokinesis, the movement of objects through psychic powers, does exist.",
+PBS,7,7.8,0,Spiritualism,"During altered states, such as sleep or trances, the spirit can leave the body.",
+PBS,8,7.9,0,Precognition,The horoscope accurately tells a person’s future.,
+PBS,9,7.1,0,Religious_Belief,I believe in God.,
+PBS,10,7.11,0,Psi,A person’s thoughts can influence the movement of a physical object.,
+PBS,11,7.12,0,Spiritualism,Reincarnation does occur.,
+PBS,12,7.13,0,Precognition,Some psychics can accurately predict the future.,
+PBS,13,7.14,0,Religious_Belief,There is a heaven and a hell.,
+PBS,14,7.15,1,Psi,Mind reading is not possible.,
+PBS,15,7.16,0,Spiritualism,It is possible to communicate with the dead.,
+PBS,16,7.17,0,Precognition,Some people have an unexplained ability to predict the future.,
+GPTS,1,8.2,0,Reference,I spent time thinking about friends gossiping about me.,
+GPTS,2,8.3,0,Reference,I often heard people referring to me.,
+GPTS,3,8.4,0,Reference,I have been upset by friends and colleagues judging me critically.,
+GPTS,4,8.5,0,Reference,People definitely laughed at me behind my back.,
+GPTS,5,8.6,0,Reference,I have been thinking a lot about people avoiding me.,
+GPTS,6,8.7,0,Reference,People have been dropping hints for me,
+GPTS,7,8.8,0,Reference,I believed that certain people were not what they seemed.,
+GPTS,8,8.9,0,Reference,People talking about me behind my back upset me.,
+GPTS,9,8.1,0,Persecution,"Certain individuals have had it in (i.e., have bad intentions) for me.",
+GPTS,10,8.11,0,Persecution,"People wanted me to feel threatened, so they stared at me.",
+GPTS,11,8.12,0,Persecution,I was certain people did things in order to annoy me.,
+GPTS,12,8.13,0,Persecution,I was convinced there was a conspiracy against me.,
+GPTS,13,8.14,0,Persecution,I was sure someone wanted to hurt me.,
+GPTS,14,8.15,0,Persecution,I couldn’t stop thinking about people wanting to confuse me.,
+GPTS,15,8.16,0,Persecution,I was distressed by being persecuted.,
+GPTS,16,8.17,0,Persecution,It was difficult to stop thinking about people wanting to make me feel bad.,
+GPTS,17,8.18,0,Persecution,People have been hostile towards me on purpose,
+GPTS,18,8.19,0,Persecution,I was angry that someone wanted to hurt me.,
+BSCS,1,9.2,1,,I am good at resisting temptation.,
+BSCS,2,9.3,0,,I have a hard time breaking bad habits,
+BSCS,3,9.4,0,,I am lazy.,
+BSCS,4,9.5,0,,I say inappropriate things,
+BSCS,5,9.6,0,,"I do certain things that are bad for me, if they are fun ",
+BSCS,6,9.7,0,,I wish I had more self-discipline,
+BSCS,7,9.8,0,,Pleasure and fun sometimes keep me from getting work done.,
+BSCS,8,9.9,0,,I have trouble concentrating.,
+BSCS,9,9.1,1,,I am able to work effectively toward long-term goals.,
+BSCS,10,9.11,0,,"Sometimes I can’t stop myself from doing something, even if I know it is wrong.",
+BSCS,11,9.12,1,,I often act without thinking through all the alternatives.,
+BSCS,12,9.13,1,,I refuse things that are bad for me.,
+BSCS,13,9.14,0,,People would say that I have iron self-discipline. ,
+SPQ,1,10.2,0,Interpersonal ,People sometimes find me aloof and distant.,
+SPQ,2,10.3,0,Cognitive-Perceptual,"Have you ever had the sense that some person or force is around you, even though you cannot see anyone? ",
+SPQ,3,10.4,0,Disorganized,People sometimes comment on my unusual mannerisms and habits.,
+SPQ,4,10.5,0,Cognitive-Perceptual,Are you sometimes sure that other people can tell what you are thinking? ,
+SPQ,5,10.6,0,Cognitive-Perceptual,Have you ever noticed a common event or object that seemed to be a special sign for you?,
+SPQ,6,10.7,0,Disorganized,Some people think that I am a very bizarre person.,
+SPQ,7,10.8,0,Interpersonal ,I feel I have to be on the guard even with friends.,
+SPQ,8,10.9,0,Disorganized,Some people find me a bit vague and elusive during a conversation.,
+SPQ,9,10.1,0,Cognitive-Perceptual,Do you often pick up hidden threats or put-downs from what people say or do?,
+SPQ,10,10.11,0,Cognitive-Perceptual,When shopping do you get the feeling that other people are taking notice of you?,
+SPQ,11,10.13,0,Interpersonal ,I feel very uncomfortable in social situations involving unfamiliar people.,
+SPQ,12,10.14,0,Cognitive-Perceptual,"Have you had experiences with astrology, seeing the future, UFOs, ESP, or a sixth sense?",
+SPQ,13,10.15,0,Disorganized,I sometimes used words in unusual ways.,
+SPQ,14,10.16,0,Interpersonal ,Have you found that it is best not to let other people know too much about you?,
+SPQ,15,10.17,0,Interpersonal ,I tend to keep in the background on social occasions.,
+SPQ,16,10.18,0,Cognitive-Perceptual,Do you ever suddenly feel distracted by distant sounds that you are not normally aware of?,
+SPQ,17,10.19,0,Cognitive-Perceptual,Do you often have to keep an eye out to stop people from taking advantage of you?,
+SPQ,18,10.2,0,Interpersonal ,Do you feel that you are unable to get “close” to people?,
+SPQ,19,10.21,0,Disorganized,"I am an odd, unusual person",
+SPQ,20,10.22,0,Disorganized,I find it hard to communicate clearly what I want to say to people.,
+SPQ,21,10.23,0,Interpersonal ,I feel very uneasy talking to people I do not know well.,
+SPQ,22,10.24,0,Interpersonal ,I tend to keep my feelings to myself.,
+IUS,1,11.2,0,Prospective_Anxiety,Unforeseen events upset me greatly.,
+IUS,2,11.3,0,Prospective_Anxiety,It frustrates me not having all the information I need.,
+IUS,3,11.4,0,Prospective_Anxiety,One should always look ahead so as to avoid surprises.,
+IUS,4,11.5,0,Prospective_Anxiety,"A small, unforeseen event can spoil everything, even with the best of planning.",
+IUS,5,11.6,0,Prospective_Anxiety,I always want to know what the future has in store for me,
+IUS,6,11.7,0,Prospective_Anxiety,I can’t stand being taken by surprise,
+IUS,7,11.8,0,Prospective_Anxiety,I should be able to organize everything in advance.,
+IUS,8,11.9,0,Inhibitory_Anxiety,Uncertainty keeps me from living a full life,
+IUS,9,11.1,0,Inhibitory_Anxiety,"When it’s time to act, uncertainty paralyses me.",
+IUS,10,11.11,0,Inhibitory_Anxiety,When I am uncertain I can’t function very well,
+IUS,11,11.12,0,Inhibitory_Anxiety,The smallest doubt can stop me from acting.,
+IUS,12,11.13,0,Inhibitory_Anxiety,I must get away from all uncertain situations,
+MAIA2,1,12.2,0,Noticing,When I am tense I notice where the tension is located in my body. ,
+MAIA2,2,12.3,0,Noticing,I notice when I am uncomfortable in my body.,
+MAIA2,3,12.4,0,Noticing,I notice where in my body I am comfortable.,
+MAIA2,4,12.5,0,Noticing,"I notice changes in my breathing, such as whether it slows down or speeds up.",
+MAIA2,5,12.6,1,Not_Worrying,"When I feel physical pain, I become upset.",
+MAIA2,6,12.7,1,Not_Worrying,I start to worry that something is wrong if I feel any discomfort.,
+MAIA2,7,12.8,0,Not_Worrying,I can notice an unpleasant body sensation without worrying about it.,
+MAIA2,8,12.9,0,Not_Worrying,I can stay calm and not worry when I have feelings of discomfort or pain.,
+MAIA2,9,12.1,1,Not_Worrying,When I am in discomfort or pain I can’t get it out of my mind.,
+MAIA2,10,12.11,0,Emotional_Awareness,I notice how my body changes when I am angry.,
+MAIA2,11,12.12,0,Emotional_Awareness,When something is wrong in my life I can feel it in my body.,
+MAIA2,12,12.13,0,Emotional_Awareness,I notice that my body feels different after a peaceful experience.,
+MAIA2,13,12.14,0,Emotional_Awareness,I notice that my breathing becomes free and easy when I feel comfortable.,
+MAIA2,14,12.15,0,Emotional_Awareness,I notice how my body changes when I feel happy / joyful.,
+PANAS,1,13.1,0,State,Indicate to what extent you feel currently regarding the COVID-19 pandemic. ,
+PANAS,2,13.2,0,Trait,Indicate to what extent you have been feeling these emotions before the onset of the COVID-19 pandemic ,

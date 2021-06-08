@@ -1,0 +1,1676 @@
+---
+title: "**Psychological Determinants of the Susceptibility to Fake News amidst the COVID-19 Pandemic**"
+subtitle: 'Supplementary Materials'
+output:
+  html_document:
+    theme: journal
+    footer: "COVID-19 News Perception"
+    highlight: pygments
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+    df_print: "kable"
+    code_folding: hide
+  word_document:
+    toc: false
+    toc_depth: 3
+    df_print: "kable"
+    highlight: "pygments"
+#    reference_docx: utils/Template_Supplementary_Materials.docx
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 4
+tags: [r, covid, coronavirus, fake news, susceptibility]
+editor_options: 
+  chunk_output_type: console
+# bibliography: bibliography.bib
+csl: utils/apa.csl
+---
+
+```{r, set.seed(333), include=FALSE, warning=FALSE, message=TRUE}
+library(knitr)
+options(knitr.kable.NA = "",
+        digits = 2)
+
+figheight <- 6
+figwidth <- 6 * 1.618034
+
+knitr::opts_chunk$set(
+  comment = ">",
+  dpi = 500,
+  fig.path = "figures/",
+  tidy = TRUE,
+  fig.height=figheight,
+  fig.width=figwidth, 
+  fig.align = "center"
+)
+```
+
+
+# Methods
+
+## Packages & Data
+
+### Packages
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+library(easystats)
+library(reshape2)
+library(cowplot)
+library(ggraph)
+library(formattable)
+library(formatR)
+library(lme4)
+library(patchwork)
+library(ggeffects)
+library(ggplot2)
+library(stringr)
+library(parameters)
+library(performance)
+library(see)
+library(glmmTMB)
+library(waffle)
+library(lavaan)
+
+
+set.seed(333)
+
+```
+
+
+### Raw Data
+
+This contains data from a Singapore sample and a UK sample.
+
+```{r warning=FALSE, message=FALSE}
+df_raw <- read.csv("data2.csv", stringsAsFactors = FALSE, na.string = c("", "NA"))
+```
+
+
+
+## Measures Scoring
+
+### Utility Functions
+```{r warning=FALSE, message=FALSE}
+# Reverse negative items
+reverse <- function(x, mini, maxi){
+  maxi - x + mini
+}
+
+# Visualization distribution with stats
+descriptive_statistics <- function(df, begins_with, dataset=NULL){
+  df %>% 
+    select(dplyr::starts_with(begins_with)) %>% 
+    report::report()
+}
+descriptive_plot <- function(df, begins_with, dataset=NULL){
+  
+  df %>% 
+    select(dplyr::starts_with(begins_with)) %>% 
+    bayestestR::estimate_density(method = "KernSmooth") %>% 
+    plot() + 
+    labs(x = "Scores", y = "Density", color = "Parameter") +
+    ggtitle(paste("Distribution of", begins_with, "scores:", dataset)) +
+    see::theme_modern()
+}
+
+# Wrangle dataframe and plot (for COVID measures)
+dataframe_wrangle <- function(df_final, dataset=NULL){
+  belief <- df_final %>% 
+    select(starts_with("Belief_"), "Participant") %>% 
+    melt() %>% 
+    arrange(Participant) %>% 
+    mutate(variable = str_remove(variable, "Belief_")) %>% 
+    rename(Measure = variable,
+           Belief = value)
+  compliance <- df_final %>% 
+    select(starts_with("Compliance_"), "Participant") %>% 
+    melt() %>% 
+    arrange(Participant) %>% 
+    mutate(variable = str_remove(variable, "Compliance_")) %>% 
+    rename(Measure = variable,
+           Compliance = value)
+  covid_measures <- merge(belief, compliance, by.y=c("Participant", "Measure")) %>% 
+    mutate(Measure = ifelse(Measure == "Distancing", "Social Distancing",
+                            ifelse(Measure == "Face", "Not touching Face",
+                                   ifelse(Measure == "Mask", "Wearing a Mask",
+                                          ifelse(Measure == "WashHands", "Washing Hands", "Staying Home")))))
+  
+  
+  covid_measures %>% 
+    ggplot(aes(x=Belief, y = Compliance, colour = Measure, fill = Measure)) +
+    geom_jitter() +
+    geom_smooth(method = "lm", alpha = 0.2) +
+    ggtitle(paste("r =", insight::format_value(cor.test(covid_measures$Belief, covid_measures$Compliance)$estimate), ":", dataset)) +
+    ggpubr::stat_cor(aes(color=Measure), label.x = 3) +
+    theme_modern()
+}
+
+# Report CFA indices
+report_cfa_indices <- function(comparison, row=1, name="<model>"){
+  paste0("(X2", name, " = ", insight::format_value(comparison[row, "Chisq"]),
+        ", AIC", name, " = ", insight::format_value(comparison[row, "AIC"]),
+        ", BIC", name, " = ", insight::format_value(comparison[row, "BIC_adjusted"]),
+        ", RMSEA", name, " = ", insight::format_value(comparison[row, "RMSEA"]),
+        ", CFI", name, " = ", insight::format_value(comparison[row, "CFI"]),
+        ", SRMR", name, " = ", insight::format_value(comparison[row, "SRMR"]),
+        ")")
+}
+```
+
+# Rescale News Item
+```{r warning=FALSE, message=FALSE}
+df_raw[stringr::str_detect(names(df_raw), "News_")] <- effectsize::change_scale(df_raw[stringr::str_detect(names(df_raw), "News_")], from = c(0, 6), to = c(-5, 5))
+
+```
+
+# Personality Questionnaires
+
+The Brief Self-Control Scale (BSCS), Paranoid Thought Scale (GPTS), and Emotionality (PANAS) were scored from 0 to 4; Conspiracist Mentality Questionnaire (CMQ) was scored from 0 to 10; Paranormal Belief Scale (PBS-R) and Intolerance Uncertainty Scale (IUS) were scored from 0 to 6; Interoception (MAIA) was scored from 0 to 5, and Schizotypy Personality (SPQ) was scored in a binary manner (1 if "Yes", 0 if "No"). The greater the scores, the stronger the traits of interest.
+
+
+```{r warning=FALSE, message=FALSE}
+df_raw <- df_raw %>% 
+  
+  # BSCS
+  mutate_at(vars("BSCS_1", "BSCS_9", "BSCS_11", "BSCS_12"), reverse, mini = 0, maxi = 4) %>% 
+  mutate(BSCS_General = BSCS_1 + BSCS_2 + BSCS_3 + BSCS_4 + BSCS_5 + BSCS_6 + BSCS_7 + BSCS_8 + BSCS_9 + BSCS_10 + BSCS_11 + BSCS_12 + BSCS_13) %>% 
+    
+  # CMQ
+  mutate(CMQ_General = (CMQ_1 + CMQ_2 + CMQ_3 + CMQ_4 + CMQ_5)/5) %>% 
+
+  # GPTS
+  mutate(
+    GPTS_Reference = GPTS_1 + GPTS_2 + GPTS_3 + GPTS_4 + GPTS_5 + GPTS_6 + GPTS_7 + GPTS_8,
+    GPTS_Persecution = GPTS_9 + GPTS_10 + GPTS_11 + GPTS_12 + GPTS_13 + GPTS_14 + GPTS_15 + GPTS_16 + GPTS_17 + GPTS_18
+    ) %>% 
+  mutate(GPTS_General = (GPTS_Reference + GPTS_Persecution)/2) %>% 
+  
+  # IUS
+  mutate(
+    IUS_InhibitoryAnxiety = IUS_8 + IUS_9 + IUS_10 + IUS_11 + IUS_12,
+    IUS_ProspectiveAnxiety = IUS_1 + IUS_2 + IUS_3 + IUS_4 + IUS_5 + IUS_6 + IUS_7
+    ) %>% 
+  mutate(IUS_General = (IUS_InhibitoryAnxiety + IUS_ProspectiveAnxiety)/2) %>% 
+  
+  # MAIA2
+  mutate_at(vars("MAIA2_5", "MAIA2_6", "MAIA2_9"), reverse, mini = 0, maxi = 5) %>% 
+  mutate(
+    MAIA_EmotionalAwareness = (MAIA2_10 + MAIA2_11 + MAIA2_12 + MAIA2_13 + MAIA2_14)/5,
+    MAIA_NotWorrying = (MAIA2_5 + MAIA2_6 + MAIA2_7 + MAIA2_8 + MAIA2_9)/5,
+    MAIA_Noticing = (MAIA2_1 + MAIA2_2 + MAIA2_3 + MAIA2_4)/4
+  ) %>% 
+  mutate(MAIA_General = (MAIA_EmotionalAwareness + MAIA_Noticing + MAIA_NotWorrying)/3) %>% 
+  
+  # PBS
+  mutate_at(vars("PBS_14"), reverse, mini = 0, maxi = 6) %>% 
+  mutate(
+    PBS_ReligiousBeliefs = (PBS_1 + PBS_5 + PBS_9 + PBS_13)/4,
+    PBS_Precognition = (PBS_4 + PBS_8 + PBS_12 + PBS_16)/4,
+    PBS_Psi = (PBS_2 + PBS_6 + PBS_10 + PBS_14) /4,
+    PBS_Spiritualism = (PBS_3 + PBS_7 + PBS_11 + PBS_15)/4
+    ) %>%
+  mutate(PBS_General = (PBS_ReligiousBeliefs + PBS_Precognition + PBS_Psi + PBS_Spiritualism)/4) %>%
+  
+  # SPQ
+  mutate_at(vars(starts_with("SPQ")), function(x) ifelse(x == "Yes", 1, 0)) %>% 
+  mutate(
+    SPQ_CognitivePerceptual = SPQ_2 + SPQ_4 + SPQ_5 + SPQ_9 + SPQ_10 + SPQ_12 + SPQ_16 + SPQ_17,
+    SPQ_Disorganized = SPQ_3 + SPQ_6 + SPQ_8 + SPQ_13 + SPQ_19 + SPQ_20,
+    SPQ_Interpersonal = SPQ_1 + SPQ_7 + SPQ_11 + SPQ_14 + SPQ_15 + SPQ_18 + SPQ_21 + SPQ_22
+  ) %>% 
+  mutate(
+    SPQ_General = SPQ_CognitivePerceptual + SPQ_Disorganized + SPQ_Interpersonal
+  ) %>% 
+
+  # PANAS
+  mutate(
+    PANAS_Negative_State = PANAS_State_Afraid + PANAS_State_Ashamed + PANAS_State_Distressed + PANAS_State_Upset + PANAS_State_Guilty + PANAS_State_Hostile + PANAS_State_Irritable + PANAS_State_Nervous + PANAS_State_Jittery + PANAS_State_Scared,
+    PANAS_Negative_Trait = PANAS_Trait_Afraid + PANAS_Trait_Ashamed + PANAS_Trait_Distressed + PANAS_Trait_Upset + PANAS_Trait_Guilty + PANAS_Trait_Hostile + PANAS_Trait_Irritable + PANAS_Trait_Nervous + PANAS_Trait_Jittery + PANAS_Trait_Scared
+    )
+
+# Remove individual questionnaire items
+# df_raw <- df_raw %>% 
+#   select(-matches("CMQ_\\d")) %>% 
+#   select(-matches("BSCS_\\d")) %>% 
+#   select(-matches("PBS_\\d")) %>% 
+#   select(-matches("SPQ_\\d")) %>% 
+#   select(-matches("MAIA2_\\d")) %>% 
+#   select(-matches("GPTS_\\d")) %>% 
+#   select(-matches("IUS_\\d")) %>% 
+#   select(-matches("PANAS_State")) %>% 
+#   select(-matches("PANAS_Trait"))
+```
+
+# Data Exclusion
+
+## Exclude Failed Attention Checks
+```{r warning=FALSE, message=FALSE}
+df_complete <- df_raw %>%
+  # filter_at(vars(matches("CMQ|PBS|GPTS|BSCS|SPQ|IUS|PANAS|MAIA")), all_vars(!is.na(.))) %>%
+  # filter_at(vars(starts_with("News_")), all_vars(!is.na(.)))  # Compulsory columns
+  filter(AttentionCheck_1 == "Yes" & AttentionCheck_2 == "Washing Hands")
+  
+paste("We excluded", nrow(df_raw) - nrow(df_complete), "participants who failed attention checks.")
+```
+
+## Exclude based on Time Completion 
+```{r warning=FALSE, message=FALSE}
+library(gridExtra)
+
+df_time <- df_complete %>%
+  filter(Duration < 120) # Less than 2 hours
+
+
+# Compute highest density intervals
+ci <- bayestestR::eti(df_time$Duration, ci = c(0.8, 0.9, 0.95, 0.99))
+cat(paste0("Duration Intervals:\n", paste0("  - ", insight::format_ci(ci$CI_low, ci$CI_high, ci$CI / 100), collapse = "\n")))
+upper_limit <- ci[ci$CI == 90, "CI_high"]
+lower_limit <- ci[ci$CI == 90, "CI_low"]
+
+# Estimates
+mode_duration <- bayestestR::map_estimate(df_time$Duration)
+tab <- as.data.frame(
+  c(
+    CI_low = round(describe_posterior(df_time$Duration)$CI_low, 2),
+    CI_high = round(describe_posterior(df_time$Duration)$CI_high, 2),
+    MAP = round(as.numeric(mode_duration), 2)
+  )
+)
+p_tab <- tableGrob(unname(tab))
+
+# Visualize
+t <- ci %>% 
+  plot(show_zero = FALSE, show_title = FALSE) +
+  geom_vline(xintercept = c(upper_limit, lower_limit), color='red', linetype="dashed", size=1) +
+  geom_vline(xintercept = mean(df_time$Duration), color='orange', linetype="dashed", size=1) +
+  annotate("text", x=mean(df_time$Duration)+7, y=1, label = paste("Mean Duration = ", round(mean(df_time$Duration), 2), "mins")) +
+  annotate("text", x=lower_limit-3, y=1, label = "CI_low") +
+  annotate("text", x=upper_limit+3, y=1, label = "CI_high") +
+  theme_modern() +
+  scale_fill_viridis_d() +
+  ylab("Distribution") +
+  xlab("Time to complete (in minutes)")
+time_plot <- grid.arrange(t, p_tab, ncol = 2, widths = c(1,0.2))
+
+
+# Exclude
+df_time <- df_time %>%
+  filter(Duration > lower_limit)
+
+paste("We excluded", nrow(df_complete) - nrow(df_time), "participants who took more than 2 hours to complete the study and with a completion time outside the 95% percentile (>", insight::format_value(lower_limit), "min). The mode duration is approximately", round(mode_duration, 2), "min.")
+
+```
+
+## Multivariate outliers
+```{r warning=FALSE, message=FALSE}
+# methods <- c("zscore", "iqr", "mahalanobis", "robust", "mcd", "ics", "iforest", "lof")
+# lof, robust, mcd, ics, mahalanobis doesn't work with NA values
+# methods <- c("zscores", "iqr", "iforest")
+# 
+# outliers_2 <- df_time %>%
+#   select(intersect(starts_with("News_"), ends_with("_Belief")),
+#          matches("CMQ|PBS|GPTS|BSCS|SPQ|IUS|PANAS|MAIA")) %>%
+#   effectsize::standardize()
+# 
+# outliers_2 <- performance::check_outliers(outliers_2, method = methods)
+# 
+# # Visualise
+# as.data.frame(outliers_2) %>%
+#   mutate(Outlier = as.factor(paste0(round(Outlier*3), "/", length(methods)))) %>%
+#   ggplot(aes(x = Outlier, fill = Outlier)) +
+#   geom_bar() +
+#   geom_vline(aes(xintercept = 6.5), color = "red", linetype = "dotted") +
+#   theme_modern() +
+#   see::scale_fill_metro_d(guide = FALSE) +
+#   xlab("Proportion of methods aggreeing on an outlier") +
+#   ylab("Number of participants")
+# 
+# save(outliers_2, file="outliers_2.Rdata")
+# load("outliers_2.Rdata")
+
+# df_final <- df_time[-which(as.numeric(outliers_2) >= 2/length(methods)), ]
+# 
+# paste("We excluded", nrow(df_time) - nrow(df_final), "participants that were classified as outliers by at least",  2/length(methods), "of the methods used.")
+
+```
+
+
+
+# Final Samples
+
+```{r warning=FALSE, message=FALSE}
+# Remove participants who do not live in the country and are not citizens
+df_final <- df_time %>% 
+  filter(Country_Residence == "Yes" | Country_Citizenship == "Yes")
+paste("We excluded", nrow(df_time) - nrow(df_final), "participants who were neither citizens of the country nor lived there.")
+
+# Label participants
+df_final <- df_final %>%
+  mutate(Participant = paste0("S", 1:nrow(df_final)))
+
+# Convert to factors
+df_final$Dataset <- as.factor(df_final$Dataset)
+
+# Split into Different Datasets
+df_sg <- df_final %>% 
+  filter(Dataset == "SG")
+df_uk <- df_final %>% 
+  filter(Dataset == "UK")
+```
+
+## SG Sample
+
+```{r warning=FALSE, message=FALSE}
+# Prepare
+df_sg <- df_sg %>% 
+  mutate(Gender = as.factor(Gender),
+         Education_Achieved = ifelse(!Education_Achieved %in% c("A Levels", "Bachelors Degree", "Diploma", "Masters Degree or similar", "Doctoral Degree or similar", "O/N Levels", NA), "Other", Education_Achieved),
+         Education_Pursuing = ifelse(!Education_Pursuing %in% c("Bachelors Degree", "Diploma", "Doctoral Degree or similar", "Masters Degree or similar", NA), "Other", Education_Pursuing),
+         Ethnicity = ifelse(!Ethnicity %in% c("Chinese", "Malay", "Indian"), "Other", Ethnicity),
+         Religion_Type = ifelse(!Religion_Type %in% c("No religion", "Buddhism", "Christianity", "Taoism", "Hinduism", "Islam"), "Other", Religion_Type)) %>% 
+  select(Participant, Gender, everything())
+
+# Report
+paste("The final Singapore sample included", report_participants(df_sg, sex="Gender"))
+
+df_sg %>% 
+  select(System_Device, System_Screen, Duration, Age, Student, Education_Achieved, Education_Pursuing, Ethnicity, starts_with("Religion"), Income) %>% 
+  report(levels_percentage = TRUE, missing_percentage = TRUE, n_entries = 10)
+```
+
+## UK Sample
+
+```{r warning=FALSE, message=FALSE}
+# Prepare
+df_uk <- df_uk %>% 
+  mutate(Participant = paste0("S", 1:nrow(df_uk)),
+         Gender = as.factor(Gender),
+         Education_Achieved = ifelse(!Education_Achieved %in% c("A Levels", "Bachelors Degree", "Diploma", "Masters Degree or similar", "Doctoral Degree or similar", "O/N Levels", NA), "Other", Education_Achieved),
+         Education_Pursuing = ifelse(!Education_Pursuing %in% c("Bachelors Degree", "Diploma", "Doctoral Degree or similar", "Masters Degree or similar", NA), "Other", Education_Pursuing)) %>% 
+  mutate(Ethnicity = ifelse(Ethnicity %in% c("White - North European", "White - South European"), "White",
+                            ifelse(Ethnicity %in% c("Chinese, Japanese, or other South East Asian", "Asian"), "Asian",
+                                   ifelse(Ethnicity %in% c("Hispanic", "Latina "), "Spain and Latin America", "Other")))) %>% 
+  mutate(Religion_Type = ifelse(Religion_Type %in% c("Muslim", "Islam"), "Islam",
+                               ifelse(Religion_Type %in% c("Christadelphian", "Christian Orthodox", "Christian ", "Protestant", "Catholic"), "Christianity",
+                                      ifelse(Religion_Type %in% c("Hindu"), "Hinduism",
+                                             ifelse(Religion_Type %in% c("Buddhist"), "Buddhism",
+                                                    "Other"))))) %>% 
+  select(Participant, Gender, everything())
+
+# Report
+paste("The final UK sample included", report_participants(df_uk, sex="Gender"))
+
+df_uk %>% 
+  select(System_Device, System_Screen, Duration, Age, Student, Education_Achieved, Education_Pursuing, Ethnicity, starts_with("Religion"), Income) %>% 
+  report(levels_percentage = TRUE, missing_percentage = TRUE, n_entries = 10)
+```
+
+## Clustering of News Items (based on belief)
+### SG News
+```{r warning=FALSE, message=FALSE}
+# df_sg_news <- df_sg %>% 
+#   select(Participant, ends_with("_Belief")) %>% 
+#   t %>% 
+#   as.data.frame() %>% 
+#   rownames_to_column()
+# colnames(df_sg_news) <- df_sg_news[1,]
+# df_sg_news <- df_sg_news[-1, -1] %>% 
+#   mutate_if(is.character, as.numeric)
+# sg_fake <- df_sg_news[1:11,]
+# sg_real <- df_sg_news[12:21,]
+# 
+# # Check cluster tendency
+# parameters::check_clusterstructure(sg_fake, standardize = FALSE) %T>%
+#   print() %>%
+#   plot() # suitable
+# parameters::check_clusterstructure(sg_real, standardize = FALSE) %T>%
+#   print() %>%
+#   plot() # suitable
+# 
+# # How many cluster
+# NbClust::NbClust(sg_fake, min.nc = 2, max.nc = 9, method = "ward.D2")
+# parameters::n_clusters(sg_fake, standardize = FALSE) %T>%
+#   print() %>% 
+#   plot() +
+#   theme_modern()
+# #The choice of 2 clusters is supported by 10 (35.71%) methods out of 28 (CH, CCC, Cindex, Silhouette, Duda, PseudoT2, Beale, Ratkowsky, McClain, Tibs2001SEmax).
+# parameters::n_clusters(sg_real, standardize = FALSE) %T>%
+#   print() %>% 
+#   plot() +
+#   theme_modern() 
+# #The choice of 2 clusters is supported by 6 (21.43%) methods out of 28 (CH, CCC, Duda, PseudoT2, Beale, McClain). (or 4)
+# 
+# # Clustering w kmeans
+# set.seed(333)
+# 
+# k_fake <- kmeans(sg_fake, centers=2, iter.max = 10000, nstart = 1000)
+# k_real <- kmeans(sg_real, centers=2, iter.max = 10000, nstart = 1000)
+# 
+# model_parameters(k2) 
+# model_parameters(k3) 
+
+
+```
+
+## Demographics
+
+### Overview
+
+```{r warning=FALSE, message=FALSE}
+
+# Gender
+gender_sg <- waffle(table(df_sg$Gender), rows=7, size=1,
+                    colors=c("#19b5fc", "#306bf2"),
+                    xlab= paste("SG Sample, N =", sum(table(df_sg$Gender))))
+
+gender_uk <- waffle(table(df_uk$Gender), rows=5, size=1,
+                    colors=c("#19b5fc", "#306bf2"),
+                    xlab= paste("UK Sample, N =", sum(table(df_uk$Gender))))
+gender_patch <- gender_sg / gender_uk + plot_layout(guides="collect", heights=c(3,1)) + plot_annotation(title = "Gender")
+
+ggsave("figures/demographics_gender.png", gender_patch, height=figheight*0.7, width=figwidth, dpi=600)
+
+
+# Ethnicity
+ethnicity_sg <- waffle(table(df_sg$Ethnicity), rows=7, size=1,
+                       colors=c("#97E597", "#3CE53C", "#049204", "#316B31"),
+                       xlab = paste("SG Sample, N =", sum(table(df_sg$Ethnicity))))
+
+ethnicity_uk <- waffle(table(df_uk$Ethnicity), rows=5, size=1,                                                    colors=c("#97E597", "#3CE53C", "#049204", "#316B31"),
+                       xlab = paste("UK Sample, N =", sum(table(df_uk$Ethnicity))))
+ethnicity_patch <- ethnicity_sg / ethnicity_uk + plot_layout(nrow=2, heights=c(3,1)) + plot_annotation(title = "Ethnicity")
+
+ggsave("figures/demographics_ethnicity.png", ethnicity_patch, height=figheight*0.7, width=figwidth, dpi=600)
+
+
+# Religion
+religion_sg <- waffle(sort(table(df_sg$Religion_Type), decreasing=TRUE),
+                      rows=7, size=1,
+                      colors=c("#E7ABF6", "#C295F7", "#D347F4", "#8C43E3", "#9A0CBB", "#5B12B2", "#67077E"),
+                    xlab = paste("SG Sample, N =", sum(table(df_sg$Religion_Type))))
+religion_uk <- waffle(sort(table(df_uk$Religion_Type), decreasing=TRUE),
+                      rows=5, size=1,
+                      colors=c("#E7ABF6", "#C295F7", "#8C43E3", "#5B12B2"),
+                      xlab = paste("UK Sample, N =", sum(table(df_uk$Religion_Type))))
+religion_patch <- religion_sg / religion_uk + plot_layout(nrow=2, heights=c(3,1)) + plot_annotation(title = "Religion")
+
+ggsave("figures/demographics_religion.png", religion_patch, height=figheight*0.7, width=figwidth, dpi=600)
+
+
+# Working Adults: Education
+education_achieved_sg <- waffle(sort(table(df_sg$Education_Achieved), decreasing=TRUE),
+                                rows=7, size=1,
+                                colors=c("#F6CCE8", "#ffa7d8", "#E58AC6", "#FF38BB", "#FF0092", "#AB0A66", "#67043D"),
+                                xlab = paste("SG Sample, N =", sum(table(df_sg$Education_Achieved))))
+education_achieved_uk <- waffle(sort(table(df_uk$Education_Achieved), decreasing=TRUE),
+                                rows=1, size=1,
+                                colors=c("#F6CCE8", "#ffa7d8", "#E58AC6", "#FF38BB", "#FF0092", "#AB0A66", "#67043D"),
+                                xlab = paste("UK Sample, N =", sum(table(df_uk$Education_Achieved))))
+education_achieved_patch <- education_achieved_sg / education_achieved_uk + plot_layout(nrow=2, heights=c(10,1)) + plot_annotation(title = "Non-Students: Education Levels")
+
+ggsave("figures/demographics_educationachieved.png", education_achieved_patch, height=figheight*0.7, width=figwidth, dpi=600)
+
+
+# Students: Education
+education_pursuing_sg <- waffle(sort(table(df_sg$Education_Pursuing), decreasing=TRUE),
+                                rows=5, size=1,
+                                colors=c("#F7E497", "#F2CB35", "#FFB400", "#D6801F", "#A75B05"),
+                                xlab = paste("SG Sample, N =", sum(table(df_sg$Education_Pursuing))))
+education_pursuing_uk <- waffle(sort(table(df_uk$Education_Pursuing), decreasing=TRUE),
+                                rows=5, size=1,
+                                colors=c("#F7E497", "#F2CB35", "#FFB400", "#D6801F", "#A75B05"), 
+                                xlab = paste("UK Sample, N =", sum(table(df_uk$Education_Pursuing))))
+education_pursuing_patch <- education_pursuing_sg / education_pursuing_uk + plot_layout(nrow=2, heights=c(1,1)) + plot_annotation(title = "Students: Education Levels (Currently Pursuing)")
+
+ggsave("figures/demographics_educationpursuing.png", education_pursuing_patch, height=figheight*0.7, width=figwidth, dpi=600)
+
+# COVID Diagnosis
+covid_sg <- waffle(sort(table(df_sg$COVID_Diagnosis), decreasing=TRUE), rows=7, size=1,
+                   colors=c("#F2AAAA", "#EC6640", "#FF0B00"),
+                   xlab = paste("SG Sample, N =", sum(table(df_sg$COVID_Diagnosis))))
+covid_uk <- waffle(sort(table(df_uk$COVID_Diagnosis), decreasing=TRUE), rows=5, size=1,
+                   colors=c("#F2AAAA", "#EC6640", "#FF0B00", "#B30800"),
+                   xlab = paste("UK Sample, N =", sum(table(df_uk$COVID_Diagnosis))))
+covid_patch <- covid_sg / covid_uk + plot_layout(nrow=2, heights=c(3,1)) + plot_annotation(title = "COVID-19 Status")
+
+ggsave("figures/demographics_covid.png", covid_patch, height=figheight*0.7, width=figwidth, dpi=600)
+
+```
+
+### Income
+
+```{r warning=FALSE, message=FALSE}
+# SG Income
+mean_income_sg <- df_sg %>% 
+     filter(Student == "No") %>% 
+     filter(!is.na(Education_Achieved)) %>% 
+     filter(!is.na(Income)) %>% 
+     summarize(mean = mean(Income))
+mean_income_sg <- mean_income_sg$mean
+
+p_income_sg <- df_sg %>% 
+  filter(Student == "No") %>% 
+  filter(!is.na(Education_Achieved)) %>% 
+  filter(!is.na(Income)) %>% 
+  ggplot(aes(x = Income, color = Education_Achieved)) +
+  geom_density(size = 1, alpha=0.3) +
+  labs(colour = "Education Level") +
+  xlab("Monthly Household Income per Capita (SGD)") +
+  xlim(0, 10000) +
+  annotate("text", x=mean_income_sg-200, y=0.0002, label = paste("Mean = S$", round(mean_income_sg, 2))) +
+  geom_vline(aes(xintercept = mean_income_sg), linetype='dashed', size=1) +
+  theme_modern() +
+  ggtitle("Singapore Sample") +
+  scale_fill_brewer(palette="Dark2")
+
+# UK Income
+mean_income_uk <- df_uk %>% 
+  filter(Student == "No") %>% 
+  filter(!is.na(Education_Achieved)) %>% 
+  filter(!is.na(Income)) %>% 
+  summarise(mean = mean(Income))
+mean_income_uk <- mean_income_uk$mean
+
+p_income_uk <- df_uk %>% 
+  filter(Student == "No") %>% 
+  filter(!is.na(Education_Achieved)) %>% 
+  filter(!is.na(Income)) %>% 
+  ggplot(aes(x = Income, color = Education_Achieved)) +
+  geom_density(size = 1, alpha=0.3) +
+  labs(colour = "Education Level") +
+  xlab("Monthly Household Income per Capita (GBP converted to SGD)") +
+  xlim(0, 20000) +
+  annotate("text", x=mean_income_uk-200, y=0.0002, label = paste("Mean = S$", round(mean_income_uk, 2))) +
+  geom_vline(aes(xintercept = mean_income_uk), linetype='dashed', size=1) +
+  theme_modern() +
+  ggtitle("UK Sample") +
+  scale_fill_brewer(palette="Dark2")
+
+p_income_sg + p_income_uk
+```
+
+### Age
+```{r warning=FALSE, message=FALSE}
+colors_sguk <- c("SG" = "#E91E63", "UK" = "#2979FF")
+
+
+age_plot <- bind_rows(df_sg, df_uk) %>% 
+  ggplot(aes(x = Age)) +
+  geom_histogram(aes(color = Dataset, fill = Dataset), position = 'identity', binwidth = 1, alpha = 0.4) +
+  scale_fill_manual(values = colors_sguk) +
+  scale_color_manual(values = colors_sguk) +
+  xlab("Age (years)") +
+  theme_modern()
+ggsave("figures/age.png", age_plot, height=figwidth, width=figwidth*1.5, dpi=600)
+
+# Correlation between survey completion duration and age
+# df_sg %>%
+#  ggplot(aes(x=Age, y=Duration)) +
+#  geom_point() +
+#  geom_smooth(method = "lm", alpha = 0.2) +
+#  ggtitle(paste("r =", insight::format_value(cor.test(df_sg$Age, df_sg$Duration)$estimate), ", p =", insight::format_value(cor.test(df_sg$Age, df_sg$Duration)$p.value))) +
+#  ylab("Duration of Survey Completion (min)") +
+#  xlab("Age (years)") +
+#  theme_modern()
+```
+
+### Religion
+```{r warning=FALSE, message=FALSE}
+
+# SG Religion
+p_religion_sg <- df_sg %>% 
+  filter(!is.na(Religion_Engagement)) %>% 
+  filter(!is.na(Religion_Type)) %>% 
+  filter(!is.na(Religion_Faith)) %>% 
+  ggplot(aes(x = Religion_Engagement, color=Religion_Type)) +
+  labs(colour = "Religion") +
+  xlab("Religious Engagement") +
+  geom_density(size = 1, alpha=0.5) +
+  scale_fill_brewer(palette="Accent") +
+  ggtitle("Singapore Sample") +
+  theme_modern()
+
+# UK Religion
+p_religion_uk <- df_uk %>% 
+  filter(!is.na(Religion_Engagement)) %>% 
+  filter(!is.na(Religion_Type)) %>% 
+  filter(!is.na(Religion_Faith)) %>% 
+  ggplot(aes(x = Religion_Engagement, color=Religion_Type)) +
+  labs(colour = "Religion") +
+  xlab("Religious Engagement") +
+  geom_density(size = 1, alpha=0.5) +
+  scale_fill_brewer(palette="Accent") +
+  ggtitle("UK Sample") +
+  theme_modern()
+
+p_religion_sg + p_religion_uk
+
+# Relationship between religious engagement and faith
+p_religion2_sg <- df_sg %>% 
+  filter(!is.na(Religion_Engagement)) %>% 
+  filter(!is.na(Religion_Faith)) %>% 
+  filter(!is.na(Religion_Type)) %>% 
+  ggplot(aes(x = Religion_Faith, y = Religion_Engagement, colour = Religion_Type, fill = Religion_Type)) +
+  geom_jitter() +
+  geom_smooth(method = "lm", alpha = 0.2) +
+  ggtitle(paste("Singapore Sample, r =", insight::format_value(cor.test(df_sg$Religion_Engagement, df_sg$Religion_Faith)$estimate), ", p =", 
+insight::format_value(cor.test(df_sg$Religion_Engagement, df_sg$Religion_Faith)$p.value))) + 
+  theme_modern()
+
+p_religion2_uk <- df_uk %>% 
+  filter(!is.na(Religion_Engagement)) %>% 
+  filter(!is.na(Religion_Faith)) %>% 
+  filter(!is.na(Religion_Type)) %>% 
+  ggplot(aes(x = Religion_Faith, y = Religion_Engagement, colour = Religion_Type, fill = Religion_Type)) +
+  geom_jitter() +
+  geom_smooth(method = "lm", alpha = 0.2) +
+  ggtitle(paste("UK Sample, r =", insight::format_value(cor.test(df_uk$Religion_Engagement, df_uk$Religion_Faith)$estimate), ", p =", 
+insight::format_value(cor.test(df_uk$Religion_Engagement, df_uk$Religion_Faith)$p.value))) +
+  theme_modern()
+
+p_religion2_sg / p_religion2_uk
+
+
+# Overall religiosity across countries
+p_religion_engagement <- bind_rows(df_sg, df_uk) %>% 
+  ggplot(aes(x = Religion_Engagement)) +
+  geom_density(aes(color = Dataset, fill = Dataset), position = 'identity', alpha = 0.4) +
+  scale_fill_manual(values = colors_sguk) +
+  scale_color_manual(values = colors_sguk) +
+  xlab("Religion Engagement") +
+  theme_modern()
+p_religion_faith <- bind_rows(df_sg, df_uk) %>% 
+  ggplot(aes(x = Religion_Faith)) +
+  geom_density(aes(color = Dataset, fill = Dataset), position = 'identity', alpha = 0.4) +
+  scale_fill_manual(values = colors_sguk) +
+  scale_color_manual(values = colors_sguk) +
+  xlab("Religion Faith") +
+  theme_modern()
+
+religion_plot <- p_religion_engagement + p_religion_faith
+ggsave("figures/religion.png", religion_plot, height=figwidth, width=figwidth*1.5, dpi=600)
+
+# Combine into one religion index
+df_sg <- df_sg %>% 
+  mutate(Religion = (Religion_Engagement + Religion_Faith) / 2)
+df_uk <- df_uk %>% 
+  mutate(Religion = (Religion_Engagement + Religion_Faith) / 2)
+
+# Summary
+ggstatsplot::grouped_ggbetweenstats(
+  data = melt(bind_rows(df_sg, df_uk), measure.vars=c("Religion_Engagement", "Religion_Faith")),
+  x = Dataset,
+  y = value,
+  plot.type = "boxviolin",
+  grouping.var = variable,
+  mean.ci = TRUE,
+  outlier.tagging = FALSE,
+  xlab = "Sample",
+  ylab = "Value",
+  title.prefix = NULL,
+  notch = FALSE,
+  bf.message = FALSE,
+  results.subtitle = FALSE,
+  title.text = "Religiosity Differences across Singapore and UK"
+)
+
+```
+
+
+## COVID-related Measures
+### Precautionary Measures
+```{r warning=FALSE, message=FALSE}
+# Correlation between Compliance and Belief
+p_measurescorr_sg <- dataframe_wrangle(df_sg, dataset = "Singapore Sample")
+p_measurescorr_uk <- dataframe_wrangle(df_uk, dataset = "UK Sample")
+p_measurescorr_sg / p_measurescorr_uk
+
+# Combine into one precuationery measures engagement index per type
+df_sg <- df_sg %>% 
+  mutate(Measures_Distancing = (Belief_Distancing + Compliance_Distancing) / 2,
+         Measures_WashingHands = (Belief_WashHands + Compliance_WashHands) / 2,
+         Measures_StayHome = (Belief_StayHome + Compliance_StayHome) / 2,
+         Measures_TouchFace = (Belief_Face + Compliance_Face) / 2,
+         Measures_WearMask = (Belief_Mask + Compliance_Mask) / 2) %>% 
+  select(-starts_with("Belief"), -starts_with("Compliance"))
+df_uk <- df_uk %>% 
+  mutate(Measures_Distancing = (Belief_Distancing + Compliance_Distancing) / 2,
+         Measures_WashingHands = (Belief_WashHands + Compliance_WashHands) / 2,
+         Measures_StayHome = (Belief_StayHome + Compliance_StayHome) / 2,
+         Measures_TouchFace = (Belief_Face + Compliance_Face) / 2,
+         Measures_WearMask = (Belief_Mask + Compliance_Mask) / 2) %>% 
+  select(-starts_with("Belief"), -starts_with("Compliance"))
+```
+
+#### PCA for COVID Measures
+```{r warning=FALSE, message=FALSE}
+df_combined <- bind_rows(df_sg, df_uk)
+
+# # Report full demographics
+df_combined %>%
+    select(Dataset, Age, Gender, Student, Education, starts_with("Religion"), Ethnicity, COVID_Diagnosis) %>%
+    report(levels_percentage = TRUE, missing_percentage = TRUE, n_entries = 10)
+df_sg %>% 
+  select(Ethnicity) %>% 
+  report(levels_percentage = TRUE, missing_percentage = TRUE, n_entries = 10)
+df_uk %>% 
+  select(Ethnicity) %>% 
+  report(levels_percentage = TRUE, missing_percentage = TRUE, n_entries = 10)
+
+df_measure <- df_combined %>% 
+  select(starts_with("Measures"))
+# Check Factor Structure
+parameters::check_factorstructure(df_measure)
+cor <- correlation::correlation(df_measure)
+# How many factor
+parameters::n_components(df_measure, cor = cor, rotation = "promax")
+
+pca_measure <- principal_components(df_measure, n = 1, rotation = "promax", threshold = "max", sort = TRUE)
+
+df_combined$Measures_G <- predict(pca_measure)$PC1
+```
+
+### Government Opinions
+
+Beliefs about the Singapore government are largely positive, with individuals generally trusting that the government is able to handle the situation, believing that they have been effective and transparent. On the other hand, beliefs about the UK government are less positive.
+
+```{r warning=FALSE, message=FALSE}
+#p_gov_sg <- descriptive_statistics(df_sg, "Gov", dataset="Singapore Sample")
+#p_gov_uk <- descriptive_statistics(df_uk, "Gov", dataset="UK Sample")
+#p_gov_sg + p_gov_uk
+```
+
+#### PCA for Government opinion
+```{r warning=FALSE, message=FALSE}
+df_gov <- df_combined %>%
+  select(starts_with("Gov")) 
+# Check Factor Structure
+parameters::check_factorstructure(df_gov)
+cor <- correlation::correlation(df_gov)
+# How many factor
+parameters::n_components(df_gov, cor = cor, rotation = "promax")
+
+pca_gov <- principal_components(df_gov, n = 1, rotation = "promax", threshold = "max", sort = TRUE)
+df_combined$Gov_G <- predict(pca_gov)$PC1
+
+```
+
+### Personal Impact
+```{r warning=FALSE, message=FALSE}
+# Rescale COVID impact
+
+df_sg[stringr::str_detect(names(df_sg), "COVID_")][2:6] <- effectsize::change_scale(select(df_sg[stringr::str_detect(names(df_sg), "COVID_")], -COVID_Diagnosis), from = c(0, 6), to = c(-3, 3))
+
+df_uk[stringr::str_detect(names(df_uk), "COVID_")][2:6] <- effectsize::change_scale(select(df_uk[stringr::str_detect(names(df_uk), "COVID_")], -COVID_Diagnosis), from = c(0, 6), to = c(-3, 3))
+
+
+
+# p_impact_sg <- descriptive_statistics(select(df_sg, -COVID_Diagnosis), "COVID", dataset="Singapore Sample")
+# p_impact_uk <- descriptive_statistics(select(df_uk, -COVID_Diagnosis), "COVID", dataset="UK Sample")
+# 
+# p_impact_sg + p_impact_uk
+```
+
+#### PCA for Personal Impact
+```{r warning=FALSE, message=FALSE}
+# om_impact <- omega(df_combined, filter = "COVID_", except = "COVID_Diagnosis", rotation_method="promax")
+# df_combined$Impact_G <- om_impact$scores[,1]
+
+df_impact <- df_combined %>%
+  select(starts_with("COVID_")) %>%
+  select(-COVID_Diagnosis)
+# Check Factor Structure
+parameters::check_factorstructure(df_impact)
+cor <- correlation::correlation(df_impact)
+# How many factor
+parameters::n_components(df_impact, cor = cor, rotation = "promax")
+
+pca_impact <- principal_components(df_impact, n = 1, rotation = "promax", threshold = "max", sort = TRUE)
+df_combined$Impact_G <- predict(pca_impact)$PC1
+```
+
+### News Consumption Patterns
+```{r warning=FALSE, message=FALSE}
+
+# News Frequency
+p_freq_sg <- df_sg %>%
+  select(starts_with("Frequency_"), "Participant") %>%
+  melt(id = "Participant") %>% 
+  arrange(Participant) %>% 
+  mutate(variable = str_remove(variable, "Frequency_")) %>%
+  rename(News = variable,
+         Frequency = value) %>% 
+  mutate(Frequency = ifelse(
+    Frequency == "Once a day", "Once",
+                     ifelse(
+    Frequency == "Twice a day", "Twice",
+                     ifelse(
+    Frequency == "Thrice a day", "Thrice",
+    "> Thrice")))) %>% 
+  mutate(Frequency = factor(Frequency,levels = c("Once", "Twice", "Thrice", "> Thrice"))) %>% 
+  ggplot(aes(x=Frequency, fill=News)) +
+  geom_bar(position = "dodge") +
+  xlab("News Frequency per day") +
+  ggtitle("Singapore Sample") +
+  theme_modern()
+p_freq_uk <- df_uk %>%
+  select(starts_with("Frequency_"), "Participant") %>%
+  melt(id = "Participant") %>% 
+  arrange(Participant) %>% 
+  mutate(variable = str_remove(variable, "Frequency_")) %>%
+  rename(News = variable,
+         Frequency = value) %>% 
+  mutate(Frequency = ifelse(
+    Frequency == "Once a day", "Once",
+                     ifelse(
+    Frequency == "Twice a day", "Twice",
+                     ifelse(
+    Frequency == "Thrice a day", "Thrice",
+    "> Thrice")))) %>% 
+  mutate(Frequency = factor(Frequency,levels = c("Once", "Twice", "Thrice", "> Thrice"))) %>% 
+  filter(!is.na(Frequency)) %>% 
+  ggplot(aes(x=Frequency, fill=News)) +
+  geom_bar(position = "dodge") +
+  xlab("News Frequency per day") +
+  ggtitle("UK Sample") +
+  theme_modern()
+p_freq_sg + p_freq_uk
+
+
+# Source of News Outlets
+descriptive_statistics(df_sg, "Source", "Singapore Sample")
+p_source_sg <- descriptive_plot(df_sg, "Source", "Singapore Sample")
+
+descriptive_statistics(df_uk, "Source", "UK Sample")
+p_source_uk <- descriptive_plot(df_uk, "Source", "UK Sample")
+
+p_source_sg + p_source_uk
+
+```
+
+
+Participants in both Singapore and UK samples are more avid followers of news on social media networks and official sites as compared to reading the newspapers (visiting shared links being of moderate frequency). Their frequency of consuming COVID-specific news and consuming general news are also similar.
+
+#### Correlation of Frequency of Reading News (Generally & from different Sources)
+
+```{r warning=FALSE, message=FALSE}
+df_combined %>% 
+  select(Frequency_COVID, starts_with("Sourc")) %>% 
+  correlation::correlation()
+```
+
+#### Data Processing for News Consumption
+
+```{r warning=FALSE, message=FALSE}
+df_combined <- df_combined %>% 
+  mutate_at(vars(starts_with("Frequency_")), function(x) ifelse(x == "More than thrice a day", 4, 
+            ifelse(x == "Thrice a day", 3, 
+            ifelse(x == "Twice a day", 2,
+            ifelse(x == "Once a day", 1, NA)))))
+
+# cor <- correlation::correlation(df_combined[str_detect(names(df_combined), "Frequency_")])
+```
+
+# Results
+
+## Descriptive Statistics
+
+### Conspiracist Mentality (CMQ)
+```{r warning=FALSE, message=FALSE}
+descriptive_statistics(df_sg, "CMQ", dataset="Singapore Sample")
+descriptive_statistics(df_uk, "CMQ", dataset="UK Sample")
+p_CMQ_sg <- descriptive_plot(df_sg, "CMQ", dataset="Singapore Sample")
+p_CMQ_uk <- descriptive_plot(df_uk, "CMQ", dataset="UK Sample")
+p_CMQ_sg + p_CMQ_uk
+```
+
+### Paranormal Beliefs (PBS)
+```{r warning=FALSE, message=FALSE}
+descriptive_statistics(df_sg, "PBS", dataset="Singapore Sample")
+descriptive_statistics(df_uk, "PBS", dataset="UK Sample")
+p_PBS_sg <- descriptive_plot(df_sg, "PBS", dataset="Singapore Sample")
+p_PBS_uk <- descriptive_plot(df_uk, "PBS", dataset="UK Sample")
+p_PBS_sg + p_PBS_uk
+```
+
+### Paranoia (GPTS)
+```{r warning=FALSE, message=FALSE}
+descriptive_statistics(df_sg, "GPTS", dataset="Singapore Sample")
+descriptive_statistics(df_uk, "GPTS", dataset="UK Sample")
+
+p_GPTS_sg <- descriptive_plot(df_sg, "GPTS", dataset="Singapore Sample")
+p_GPTS_uk <- descriptive_plot(df_uk, "GPTS", dataset="UK Sample")
+p_GPTS_sg + p_GPTS_uk
+```
+
+### Self-Control (BSCS)
+```{r warning=FALSE, message=FALSE}
+descriptive_statistics(df_sg, "BSCS", dataset="Singapore Sample")
+descriptive_statistics(df_uk, "BSCS", dataset="UK Sample")
+
+p_BSCS_sg <- descriptive_plot(df_sg, "BSCS", dataset="Singapore Sample")
+p_BSCS_uk <- descriptive_plot(df_uk, "BSCS", dataset="UK Sample")
+p_BSCS_sg + p_BSCS_uk
+```
+
+### Intolerance to Uncertainty (IUS)
+```{r warning=FALSE, message=FALSE}
+descriptive_statistics(df_sg, "IUS", dataset="Singapore Sample")
+descriptive_statistics(df_uk, "IUS", dataset="UK Sample")
+
+p_IUS_sg <- descriptive_plot(df_sg, "IUS", dataset="Singapore Sample")
+p_IUS_uk <- descriptive_plot(df_uk, "IUS", dataset="UK Sample")
+p_IUS_sg + p_IUS_uk
+```
+
+### Interoception (MAIA2)
+```{r warning=FALSE, message=FALSE}
+descriptive_statistics(df_sg, "MAIA", dataset="Singapore Sample")
+descriptive_statistics(df_uk, "MAIA", dataset="UK Sample")
+
+p_MAIA_sg <- descriptive_plot(df_sg, "MAIA", dataset="Singapore Sample")
+p_MAIA_uk <- descriptive_plot(df_uk, "MAIA", dataset="UK Sample")
+p_MAIA_sg + p_MAIA_uk
+```
+
+### Schizotypy Personality (SPQ)
+```{r warning=FALSE, message=FALSE}
+descriptive_statistics(df_sg, "SPQ", dataset="Singapore Sample")
+descriptive_statistics(df_uk, "SPQ", dataset="UK Sample")
+
+p_SPQ_sg <- descriptive_plot(df_sg, "SPQ", dataset="Singapore Sample")
+p_SPQ_uk <- descriptive_plot(df_uk, "SPQ", dataset="UK Sample")
+p_SPQ_sg + p_SPQ_uk
+```
+
+### Emotionality (PANAS)
+```{r warning=FALSE, message=FALSE}
+descriptive_statistics(df_sg, "PANAS", dataset="Singapore Sample")
+descriptive_statistics(df_uk, "PANAS", dataset="UK Sample")
+
+p_PANAS_sg <- descriptive_plot(df_sg, "PANAS", dataset="Singapore Sample")
+p_PANAS_uk <- descriptive_plot(df_uk, "PANAS", dataset="UK Sample")
+p_PANAS_sg + p_PANAS_uk
+```
+
+
+
+## Transform Data to Long Type
+```{r warning=FALSE, message=FALSE}
+df_combined <- df_combined %>% 
+  arrange(Dataset)
+
+# Reshape Data
+names(df_combined) <- gsub("[News]_", "", names(df_combined))
+
+df_long <- df_combined %>%
+  pivot_longer(
+    cols = starts_with("New"),
+    names_to = c("News_Item", ".value"),
+    names_sep = "_",
+  ) %>% 
+  mutate(News_Item = as.numeric(str_remove(News_Item, "New"))) %>% 
+  rename(News_Belief = Belief,
+         News_Familiarity = Familiarity,
+         News_Importance = Importance) %>% 
+  # Marker of Fake or Real (1-11 items are fake, scored 0)
+  mutate(Type = as.factor(ifelse(News_Item >= 1 & News_Item <= 11, "Fake News", "Real News"))) 
+
+#Convert to factor
+df_long$News_Item <- as.factor(df_long$News_Item)
+
+colors_fakereal <- c("Fake News" = "#d0008b", "Real News" = "#63d10f")
+
+```
+## News Items
+
+News headlines were scored from a scale of 0 to 6, on whether they are perceived as 1) accurate (truth value), 2) important, and 3) familiar. Higher scores indicate strong beliefs of truthness, importance, and familiarity respectively.
+
+```{r warning=FALSE, message=FALSE}
+# Beliefs
+df_long %>% 
+  ggplot(aes(x = News_Belief, color=Type)) +
+  xlab("Reality Belief") +
+  geom_density(size = 1, alpha=0.5, adjust=2, position = 'identity', binwidth = 1) +
+  scale_color_manual(values = colors_fakereal) +
+  geom_vline(xintercept = 0, linetype='dashed') +
+  ggtitle("Distribution of Belief Rating for Fake and Real News") +
+  theme_modern()  
+```
+
+## Analysis of Psychological Mechanisms underlying News Beliefs
+
+### Baseline Model
+
+
+```{r warning=FALSE, message=FALSE}
+baseline_model <- glmmTMB(News_Belief ~ Type + (1+Type|Participant) + (1|News_Item) + (1|Dataset), data = df_long)
+# Include Type as random slope since truth value may have different effect on participants
+
+model_parameters(baseline_model)
+r2(baseline_model)
+
+# Plot baseline difference
+modelbased::estimate_means(baseline_model) %>% 
+  ggplot(aes(x=Type, y=Mean, color=Type)) +
+  geom_line(aes(group = 1), size = 1) +
+  geom_pointrange(aes(ymin = CI_low, ymax = CI_high), size = 1) +
+  theme_modern() +
+  geom_hline(yintercept=0, linetype='dashed') +
+  ylab("Reality Belief") +
+  xlab("Type") + 
+  scale_color_manual(values=colors_fakereal)
+
+# Familiarity
+model_familiarity <- glmmTMB(News_Belief ~ Type / News_Familiarity + (1+Type|Participant) + (1|News_Item), data = df_long)
+model_parameters(model_familiarity)
+r2(model_familiarity)
+
+# Visualize
+modelbased::estimate_link(model_familiarity, target=c("Type", "News_Familiarity")) %>%
+ ggplot(aes(x=News_Familiarity, y=Predicted)) +
+ geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill=Type), alpha=0.33) +
+ geom_line(aes(color=Type), size = 1) +
+ theme_modern() +
+ ylab("Reality Belief") +
+ xlab("News Familiarity") +
+ ggtitle("Effect of Familiarity on Reality Perception") + 
+ scale_color_manual(values=colors_fakereal) +
+ scale_fill_manual(values=colors_fakereal)
+
+# # Importance
+# model_importance <- glmmTMB(News_Belief ~ Type * News_Importance + (1+Type|Participant) + (1|Dataset) + (1|News_Item), data = df_long)
+# model_parameters(model_importance)
+# # Visualize
+# modelbased::estimate_link(model_importance) %>%
+#  ggplot(aes(x=News_Importance, y=Predicted)) +
+#  geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill=Type), alpha=0.33) +
+#  geom_line(aes(color=Type), size = 1) +
+#  theme_modern() +
+#  ylab("Reality Belief") +
+#  xlab("News Importance") +
+#  ggtitle("Effect of News Importance on Reality Perception") + 
+#  scale_color_manual(values=colors_fakereal) +
+#  scale_fill_manual(values=colors_fakereal)
+```
+
+Here, we show that individuals are more likely to perceive news as accurate if the news item was real as compared to if it was fake, after controlling for the sample (i.e., UK or SG sample) and the different news items presented within the samples.
+
+
+### Effect of Sociodemographics
+#### Gender
+
+```{r warning=FALSE, message=FALSE}
+model_sex <- glmmTMB(News_Belief ~ Type / Gender + News_Familiarity + (1+Type|Participant) + (1|Dataset) + (1|News_Item), data = df_long)
+
+model_parameters(model_sex)
+r2(model_sex)
+
+# Visualize
+modelbased::estimate_means(model_sex) %>% 
+  ggplot(aes(x=Gender, y=Mean, group=Type, color=Type)) +
+  # geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill=Type), alpha=0.5) +
+  geom_line(size = 1) +
+  geom_pointrange(aes(ymin = CI_low, ymax = CI_high), size = 1) +
+  theme_modern() +
+  ylab("Reality Belief") +
+  xlab("Effect of Gender on Reality Perception") + 
+  scale_color_manual(values=colors_fakereal)
+
+```
+
+There is no effect of gender on the perception of news information as accurate. 
+
+#### Age
+
+```{r warning=FALSE, message=FALSE}
+model_age <- glmmTMB(News_Belief ~ Type / Age + Education + News_Familiarity + (1+Type|Participant) + (1|Dataset) + (1|News_Item), data = df_long)
+
+model_parameters(model_age)
+r2(model_age)
+
+# Visualize
+modelbased::estimate_link(model_age, target=c("Type", "Age")) %>%
+ ggplot(aes(x=Age, y=Predicted)) +
+ geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill=Type), alpha=0.33) +
+ geom_line(aes(color=Type), size = 1) +
+ theme_modern() +
+ ylab("Reality Belief") +
+ xlab("Age") +
+ ggtitle("Effect of Age on Reality Perception") + 
+ scale_color_manual(values=colors_fakereal) +
+ scale_fill_manual(values=colors_fakereal)
+  
+```
+
+There is negative effect of age on the perception of news information as accurate. 
+
+#### Education
+
+```{r warning=FALSE, message=FALSE}
+
+model_education <- glmmTMB(News_Belief ~ Type / Education + News_Familiarity + Age + (1+Type|Participant) + (1|Dataset) + (1|News_Item), data = df_long)
+
+model_parameters(model_education)
+r2(model_education)
+
+# Visualize
+modelbased::estimate_link(model_education, target=c("Type", "Education")) %>%
+ ggplot(aes(x=Education, y=Predicted)) +
+ geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill=Type), alpha=0.33) +
+ geom_line(aes(color=Type), size = 1) +
+ theme_modern() +
+ ylab("Reality Belief") +
+ xlab("Education (No. of Years after High School)") +
+ ggtitle("Effect of Education on Reality Perception") + 
+ scale_color_manual(values=colors_fakereal) +
+ scale_fill_manual(values=colors_fakereal)
+```
+
+Education has no significant effect on the belief of news. 
+
+### Effect of COVID-related Measures
+#### Precautionary Measures
+```{r warning=FALSE, message=FALSE}
+model_measures <- glmmTMB(News_Belief ~ Type / MeasureG + News_Familiarity + (1+Type|Participant) + (1|Dataset) + (1|News_Item), data = df_long)
+
+model_parameters(model_measures)
+r2(model_measures)
+check_outliers(model_measures)
+# Visualize
+modelbased::estimate_link(model_measures, target=c("Type", "MeasureG")) %>%
+ ggplot(aes(x=MeasureG, y=Predicted)) +
+ geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill=Type), alpha=0.33) +
+ geom_line(aes(color=Type), size = 1) +
+ theme_modern() +
+ xlab("Reality Belief") +
+ ylab("Measure Compliance") +
+ ggtitle("Effect of COVID-19 Measure Compliance on Reality Perception") + 
+ scale_color_manual(values=colors_fakereal) +
+ scale_fill_manual(values=colors_fakereal)
+```
+
+#### Government Opinions
+```{r warning=FALSE, message=FALSE}
+model_gov <- glmmTMB(News_Belief ~ Type / Gov_G + News_Familiarity + (1+Type|Participant) + (1|Dataset) + (1|News_Item), data = df_long)
+
+model_parameters(model_gov)
+r2(model_gov)
+# Visualize
+modelbased::estimate_link(model_gov, target=c("Type", "Gov_G")) %>%
+ ggplot(aes(x=Gov_G, y=Predicted)) +
+ geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill=Type), alpha=0.33) +
+ geom_line(aes(color=Type), size = 1) +
+ theme_modern() +
+ ylab("Reality Belief") +
+ xlab("Opinions about Government (Negative to Positive)") +
+ ggtitle("Effect of COVID-19 Government Opinions on Reality Perception") + 
+ scale_color_manual(values=colors_fakereal) +
+ scale_fill_manual(values=colors_fakereal)
+
+```
+
+#### Personal Impact
+```{r warning=FALSE, message=FALSE}
+model_impact <- glmmTMB(News_Belief ~ Type / Impact_G + News_Familiarity + (1+Type|Participant) + (1|Dataset) + (1|News_Item), data = df_long)
+
+model_parameters(model_impact)
+r2(model_impact)
+# Visualize
+modelbased::estimate_link(model_impact, target=c("Type", "Impact_G")) %>%
+ ggplot(aes(x=Impact_G, y=Predicted)) +
+ geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill=Type), alpha=0.33) +
+ geom_line(aes(color=Type), size = 1) +
+ theme_modern() +
+ ylab("Reality Belief") +
+ xlab("Personal Impact (Negative to Positive)") +
+ ggtitle("Effect of COVID-19 Personal Impact on Reality Perception") + 
+ scale_color_manual(values=colors_fakereal) +
+ scale_fill_manual(values=colors_fakereal)
+```
+
+#### News Frequency
+```{r warning=FALSE, message=FALSE}
+model_newsf <- glmmTMB(News_Belief ~ Type / Frequency_COVID + News_Familiarity + (1+Type|Participant) + (1|Dataset) + (1|News_Item), data = df_long)
+
+model_parameters(model_newsf)
+r2(model_newsf)
+
+# Visualize
+modelbased::estimate_link(model_newsf, target=c("Type", "Frequency_COVID")) %>%
+ ggplot(aes(x=Frequency_COVID, y=Predicted)) +
+ geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill=Type), alpha=0.33) +
+ geom_line(aes(color=Type), size = 1) +
+ theme_modern() +
+ ylab("Reality Belief") +
+ xlab("Frequency of Reading COVID-19 News") +
+ ggtitle("Effect of News Reading Frequency on Reality Perception") + 
+ scale_color_manual(values=colors_fakereal) +
+ scale_fill_manual(values=colors_fakereal)
+```
+
+#### News Sources
+
+```{r warning=FALSE, message=FALSE}
+
+model_newssource <- glmmTMB(News_Belief ~ Type / (SourcNewspaper + SourcOfficialSites + SourcSharedLinks + SourcSocialNetworks) + News_Familiarity + (1+Type|Participant) + (1|Dataset) + (1|News_Item), data = df_long)
+
+model_parameters(model_newssource)
+r2(model_newssource)
+
+```
+
+
+
+### Effect of Personality Traits
+
+#### Principal Component Analysis (for dimensions)
+```{r warning=FALSE, message=FALSE}
+items <- df_combined %>% 
+  select(-matches("CMQ_\\d")) %>% 
+  select(-matches("BSCS_\\d")) %>%
+  select(-matches("PBS_\\d")) %>%
+  select(-matches("SPQ_\\d")) %>%
+  select(-matches("MAIA2_\\d")) %>%
+  select(-matches("GPTS_\\d")) %>%
+  select(-matches("IUS_\\d")) %>%
+  select(-matches("PANAS_Stat")) %>%
+  select(-matches("PANAS_Trait")) %>% 
+  select(-GPTS_General, -IUS_General, -PBS_General, -SPQ_General, -MAIA_General) %>% 
+  select(starts_with("BSCS"), starts_with("GPTS"), starts_with("CMQ"), starts_with("MAIA"), starts_with("PBS"), starts_with("PANAS"), starts_with("SPQ"), starts_with("IUS"), Religion)
+
+# Check Factor Structure
+parameters::check_factorstructure(items)
+
+cor <- correlation::correlation(items)
+# How many factor
+parameters::n_components(items, cor = cor, rotation = "promax", package = "all", safe = FALSE) %T>% 
+  print() %>%
+  plot() +
+  theme_modern()
+
+# Run PCA
+pca <- principal_components(items, n = 6, rotation = "promax", threshold = "max", sort = TRUE)
+pca
+summary(pca)
+
+# save table
+pca_kable <- as.data.frame(pca) %>% 
+  select(Variable, RC1, RC2, RC6, RC5, RC3, RC4)
+
+pca_kable$Variable[which(pca_kable$Variable == "PANAS_NegativState")] <- "PANAS_NegativeState"
+pca_kable$Variable[which(pca_kable$Variable == "PANAS_NegativTrait")] <- "PANAS_NegativeTrait"
+
+# kableExtra::kbl(pca_kable, align = "c") %>% 
+#   kableExtra::kable_classic(full_width = F) %>%
+#   kableExtra::footnote(general = "RC1: Disorganized Thoughts and Behaviours, RC2: Paranormal Beliefs, RC6: Religiosity, RC5: Negative Affect, RC3: Sensitivity, RC4: Intolerance to Discomfort") %>% 
+#   kableExtra::save_kable("figures/pca_table.png", zoom = 1.5)
+
+write.csv(pca_kable, "figures/pca_table.csv", na="", row.names=F)
+```
+
+#### Dataframe with Predicted Scores
+```{r warning=FALSE, message=FALSE}
+scores <- predict(pca, names=c("Disorganized", "Paranormal_Beliefs", "Religiosity", "Negative_Affect", "Sensitivity", "Intolerance_Discomfort"))
+scores$Participant <- paste0("S", 1:nrow(scores))
+
+df_scores <- merge(df_long, scores, by="Participant")
+
+df_scores %>%
+  select(Age, Education, Disorganized, Paranormal_Beliefs, Religiosity) %>%
+  correlation::correlation() %>%
+  summary(redundant=TRUE)
+```
+
+#### Disorganized
+
+```{r warning=FALSE, message=FALSE}
+model_disorganized <- glmmTMB(News_Belief ~ Type / Disorganized + News_Familiarity + (1+Type|Participant) + (1|Dataset) + (1|News_Item), data = df_scores)
+
+model_parameters(model_disorganized)
+r2(model_disorganized)
+
+modelbased::estimate_link(model_disorganized, target=c("Type", "Disorganized")) %>%
+ ggplot(aes(x=Disorganized, y=Predicted)) +
+ geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill=Type), alpha=0.33) +
+ geom_line(aes(color=Type), size = 1) +
+ theme_modern() +
+ ylab("Reality Belief") +
+ xlab("Disorganized") +
+ ggtitle("Effect of Disorganized on Reality Perception") + 
+ scale_color_manual(values=colors_fakereal) +
+ scale_fill_manual(values=colors_fakereal)
+```
+Disorganized has a significant positive effect on the belief of Fake News where individuals with higher level of disorganized are more likely to believe in fake news.
+
+#### Paranormal Belief
+```{r warning=FALSE, message=FALSE}
+model_parabelief <- glmmTMB(News_Belief ~ Type / Paranormal_Beliefs + News_Familiarity + (1+Type|Participant) + (1|Dataset) + (1|News_Item), data = df_scores)
+
+model_parameters(model_parabelief)
+r2(model_parabelief)
+
+modelbased::estimate_link(model_parabelief, target=c("Type", "Paranormal_Beliefs")) %>%
+ ggplot(aes(x=Paranormal_Beliefs, y=Predicted)) +
+ geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill=Type), alpha=0.33) +
+ geom_line(aes(color=Type), size = 1) +
+ theme_modern() +
+ ylab("Reality Belief") +
+ xlab("Paranormal Beliefs") +
+ ggtitle("Effect of Paranormal Beliefs on Reality Perception") + 
+ scale_color_manual(values=colors_fakereal) +
+ scale_fill_manual(values=colors_fakereal)
+```
+Paranormal Belief has a significant positive effect on the belief of Fake News where individuals with higher level of paranormal beliefs are more likely to believe in fake news. 
+
+#### Religiosity
+
+```{r warning=FALSE, message=FALSE}
+model_religiosity <- glmmTMB(News_Belief ~ Type / Religiosity + News_Familiarity + (1|Religion_Type) + (1+Type|Participant) + (1|Dataset) + (1|News_Item), data = df_scores)
+
+model_parameters(model_religiosity)
+r2(model_religiosity)
+
+modelbased::estimate_link(model_religiosity, target=c("Type", "Religiosity")) %>%
+ ggplot(aes(x=Religiosity, y=Predicted)) +
+ geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill=Type), alpha=0.33) +
+ geom_line(aes(color=Type), size = 1) +
+ theme_modern() +
+ ylab("Reality Belief") +
+ xlab("Religiosity") +
+ ggtitle("Effect of Religiosity on Reality Perception") + 
+ scale_color_manual(values=colors_fakereal) +
+ scale_fill_manual(values=colors_fakereal)
+
+```
+Religiosity has a significant positive effect on the belief of Fake News where individuals with higher level of religiosity are more likely to believe in fake news.
+
+#### Negative Affect
+
+```{r warning=FALSE, message=FALSE}
+model_negative <- glmmTMB(News_Belief ~ Type / Negative_Affect + News_Familiarity + (1+Type|Participant) + (1|Dataset) + (1|News_Item), data = df_scores)
+
+model_parameters(model_negative)
+r2(model_negative)
+
+modelbased::estimate_link(model_negative, target=c("Type", "Negative_Affect")) %>%
+ ggplot(aes(x=Negative_Affect, y=Predicted)) +
+ geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill=Type), alpha=0.33) +
+ geom_line(aes(color=Type), size = 1) +
+ theme_modern() +
+ ylab("Reality Belief") +
+ xlab("Negative Affect") +
+ ggtitle("Effect of Negative Affect on Reality Perception") + 
+ scale_color_manual(values=colors_fakereal) +
+ scale_fill_manual(values=colors_fakereal)
+```
+Negative Affect has a significant positive effect on the belief of Fake News where individuals with higher level of Negative Affect are more likely to believe in fake news.
+
+#### Sensitivity
+
+```{r warning=FALSE, message=FALSE}
+model_sensitivity <- glmmTMB(News_Belief ~ Type / Sensitivity + News_Familiarity + (1+Type|Participant) + (1|Dataset) + (1|News_Item), data = df_scores)
+model_parameters(model_sensitivity)
+r2(model_sensitivity)
+
+modelbased::estimate_link(model_sensitivity, target=c("Type", "Sensitivity")) %>%
+ ggplot(aes(x=Sensitivity, y=Predicted)) +
+ geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill=Type), alpha=0.33) +
+ geom_line(aes(color=Type), size = 1) +
+ theme_modern() +
+ ylab("Reality Belief") +
+ xlab("Sensitivity") +
+ ggtitle("Effect of Sensitivity on Reality Perception") + 
+ scale_color_manual(values=colors_fakereal) +
+ scale_fill_manual(values=colors_fakereal)
+```
+Sensitivity has marginal significant effect on the belief of Fake News.
+
+#### Intolerance to Discomfort
+
+```{r warning=FALSE, message=FALSE}
+model_intolerance <- glmmTMB(News_Belief ~ Type / Intolerance_Discomfort + News_Familiarity + (1+Type|Participant) + (1|Dataset) + (1|News_Item), data = df_scores)
+
+model_parameters(model_intolerance)
+r2(model_intolerance)
+
+modelbased::estimate_link(model_intolerance, target=c("Type", "Intolerance_Discomfort")) %>%
+ ggplot(aes(x=Intolerance_Discomfort, y=Predicted)) +
+ geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill=Type), alpha=0.33) +
+ geom_line(aes(color=Type), size = 1) +
+ theme_modern() +
+ ylab("Reality Belief") +
+ xlab("Intolerance to Discomfort") +
+ ggtitle("Effect of Intolerance to Discomfort on Reality Perception") + 
+ scale_color_manual(values=colors_fakereal) +
+ scale_fill_manual(values=colors_fakereal)
+```
+Intolerance to Discomfort has a significant positive effect on the belief of both Real News and Fake News where individuals with higher level of intolerance to discomfort are more likely to believe in news in general.
+
+# SEM
+```{r warning=FALSE, message=FALSE}
+
+df_sem <- df_scores %>% 
+  group_by(Participant, Type, Dataset) %>% 
+  select(Participant, Dataset, Type, News_Belief, Disorganized, Paranormal_Beliefs, Religiosity, Sensitivity, Intolerance_Discomfort, Negative_Affect, News_Familiarity, starts_with("Measure"), starts_with("Gov"), Education, starts_with("COVID_"), starts_with("Impact"), Frequency_COVID, SourcOfficialSites, SourcSharedLinks, SourcNewspaper) %>% 
+  select(-COVID_Diagnosis) %>% 
+  summarise_all(mean, na.rm=TRUE) %>%
+  pivot_wider(names_from = Type, values_from = c(News_Belief, News_Familiarity)) %>% 
+  rename(Belief_FakeNews = `News_Belief_Fake News`,
+         Belief_RealNews = `News_Belief_Real News`,
+         Familiarity_FakeNews = `News_Familiarity_Fake News`,
+         Familiarity_RealNews = `News_Familiarity_Real News`)
+
+# Adding News_Familiarity, Measures, Gov, Impact as predictors of Belief
+sem_model <- '
+  # regressions
+  Belief_FakeNews ~ Disorganized + Religiosity + Paranormal_Beliefs + Negative_Affect + Sensitivity + Intolerance_Discomfort + Familiarity_FakeNews + Gov_G + Frequency_COVID + SourcOfficialSites + SourcSharedLinks
+
+  Belief_RealNews ~ Sensitivity + Intolerance_Discomfort + Familiarity_RealNews + Gov_G 
+
+  MeasureG ~ Belief_FakeNews + Belief_RealNews +  Gov_G + Frequency_COVID
+
+  # correlated residuals
+  Belief_FakeNews ~~ Belief_RealNews
+  Frequency_COVID ~~ SourcSharedLinks
+  Frequency_COVID ~~ SourcOfficialSites
+'
+mlav <- sem(sem_model, data = df_sem)
+summary(mlav, fit.measures=TRUE)
+
+# Remove insignificant links
+sem_model2 <- '
+  # regressions
+  Belief_FakeNews ~ Paranormal_Beliefs + Negative_Affect + Familiarity_FakeNews + Frequency_COVID + SourcSharedLinks
+
+  Belief_RealNews ~ Intolerance_Discomfort + Familiarity_RealNews + Gov_G
+
+  MeasureG ~ Belief_RealNews + Gov_G + Frequency_COVID
+
+  # correlated residuals
+  Belief_FakeNews ~~ Belief_RealNews
+  Frequency_COVID ~~ SourcSharedLinks
+'
+mlav2 <- sem(sem_model2, data = df_sem)
+summary(mlav2, fit.measures=TRUE)
+
+as.data.frame(compare_performance(mlav, mlav2))
+
+# Table of fit indices
+sem_model_1 <- summary(mlav, fit.measures=TRUE)
+sem_table_1 <- as.data.frame(t(as.data.frame(sem_model_1$FIT)))
+sem_table_1 <- sem_table_1 %>% 
+  select(chisq, df, pvalue, cfi, rmsea, srmr, aic, bic)
+
+sem_model_2 <- summary(mlav2, fit.measures=TRUE)
+sem_table_2 <- as.data.frame(t(as.data.frame(sem_model_2$FIT)))
+sem_table_2 <- sem_table_2 %>% 
+  select(chisq, df, pvalue, cfi, rmsea, srmr, aic, bic)
+
+sem_table_indices <- rbind(sem_table_1, sem_table_2)
+rownames(sem_table_indices) <- c("Initial Model", "Final Model")
+colnames(sem_table_indices) <- c("$\\chi^2$" , "df", "$p$-value", "CFI", "RMSEA", "SRMR", "AIC", "BIC")
+
+# Save table of fit indices
+write.csv(sem_table_indices, "figures/sem_table.csv", row.names=T)
+# kableExtra::kbl(sem_table_indices, align = "c") %>%
+#   kableExtra::kable_classic(full_width = F) %>%
+#   kableExtra::footnote(general = "$\\chi^2$ = Chi-square; df = Degrees of Freedom; CFI = Confidence Free Interval; RMSEA = Root Mean Square Error of Approximation; SRMR = Standardized Root Mean Square Residual; AIC = Akaike Information Criterion; BIC = Bayesian Information Criterion.")
+  # kableExtra::save_kable("figures/sem_table.png", zoom=1.5)
+
+
+sem_variables_table <- sem_model_2$PE %>% 
+  filter(pvalue < 0.03) %>% 
+  filter(row_number() <= n()-17) %>%
+  mutate(Variables = paste(lhs, op, rhs)) %>% 
+  rename(c("Standard Error" = "se",
+           "$p$-value" = "pvalue",
+           "Standardized Coefficients" = "est")) %>% 
+  select("Variables", "Standardized Coefficients", "Standard Error", "$p$-value")
+write.csv(sem_variables_table, "figures/sem_variables_table.csv", row.names=F)
+# 
+# kableExtra::kbl(sem_variables_table, align = "c") %>% 
+#   kableExtra::kable_classic(full_width = F) %>%
+#   kableExtra::footnote(general = "Belief_*News = Belief in COVID-19 fake/real news items; Familiarity_*News = Perceived familiarity of COVID-19 fake/real news items; Frequency_COVID = Frequency of Reading COVID-19 related news; Gov_G = Government Opinions; MeasureG = Compliance to COVID-19 Precautionery Measures") %>% 
+  # kableExtra::save_kable("figures/sem_variables_table.png", zoom=2.0)
+
+# Plot
+## Extract standardized parameters
+sem_parameters <-model_parameters(mlav2, standardize = FALSE) %>% 
+  filter(p < .03) %>%   
+  filter(abs(Coefficient) > 0.069)
+data_plot <- see::data_plot(sem_parameters, ci=FALSE)
+data_plot$nodes <- mutate(data_plot$nodes,
+  Name = str_replace(Name, "Paranormal_Beliefs", "Paranormal\nBeliefs"),
+  Name = str_replace(Name, "Negative_Affect", "Negative\nAffect"),
+  Name =
+  str_replace(Name, "Familiarity_FakeNews", "Fake News \nFamiliarity"),
+  Name =
+  str_replace(Name, "Gov_G", "Government\nOpinions"),
+  Name =
+  str_replace(Name, "Familiarity_RealNews", "Real News \nFamiliarity"),
+  Name =
+  str_replace(Name, "Belief_RealNews", "Real News\nBelief"),
+  Name =
+  str_replace(Name, "Intolerance_Discomfort", "Intolerance to\nDiscomfort"),
+  Name =
+  str_replace(Name, "Impact_G", "Personal\nImpact"),
+  Name =
+  str_replace(Name, "Belief_FakeNews", "Fake News\nBelief"),
+  Name =
+  str_replace(Name, "MeasureG", "Measure\nCompliance"),
+  Name =
+  str_replace(Name, "Frequency_COVID", "Frequency\nof Reading\nNews"),
+  Name =
+  str_replace(Name, "SourcSharedLinks", "Reading from\nShared Links"),
+  Name =
+  str_replace(Name, "SourcNewspaper", "Reading from\nNewspaper")
+  )
+
+data_plot$edges <- mutate(data_plot$edges,
+  from = str_replace(from, "Paranormal_Beliefs", "Paranormal\nBeliefs"),
+  from = str_replace(from, "Negative_Affect", "Negative\nAffect"),
+  from = str_replace(from, "Familiarity_FakeNews", "Fake News \nFamiliarity"),
+  from = str_replace(from, "Gov_G", "Government\nOpinions"),
+  from = str_replace(from, "Familiarity_RealNews", "Real News \nFamiliarity"),
+  from = str_replace(from, "Belief_RealNews", "Real News\nBelief"),
+  from = str_replace(from, "Intolerance_Discomfort", "Intolerance to\nDiscomfort"),
+  from = str_replace(from, "Impact_G", "Personal\nImpact"),
+  from = str_replace(from, "Belief_FakeNews", "Fake News\nBelief"),
+  from = str_replace(from, "MeasureG", "Measure\nCompliance"),
+  from = str_replace(from, "SourcSharedLinks", "Reading from\nShared Links"),
+  from = str_replace(from, "Frequency_COVID", "Frequency\nof Reading\nNews")
+  )
+
+data_plot$edges <- mutate(data_plot$edges,
+  to = str_replace(to, "Paranormal_Beliefs", "Paranormal\nBeliefs"),
+  to = str_replace(to, "Negative_Affect", "Negative\nAffect"),
+  to = str_replace(to, "Familiarity_FakeNews", "Fake News \nFamiliarity"),
+  to = str_replace(to, "Gov_G", "Government\nOpinions"),
+  to = str_replace(to, "Familiarity_RealNews", "Real News \nFamiliarity"),
+  to = str_replace(to, "Belief_RealNews", "Real News\nBelief"),
+  to = str_replace(to, "Intolerance_Discomfort", "Intolerance to\nDiscomfort"),
+  to = str_replace(to, "Impact_G", "Personal\nImpact"),
+  to = str_replace(to, "Belief_FakeNews", "Fake News\nBelief"),
+  to =
+  str_replace(to, "MeasureG", "Measure\nCompliance"),
+  to =
+  str_replace(to, "Frequency_COVID", "Frequency\nof Reading\nNews"),
+  to =
+  str_replace(to, "SourcSharedLinks", "Reading from\nShared Links"),
+  to =
+  str_replace(to, "SourcNewspaper", "Reading from\nNewspaper")
+  )
+
+
+
+
+
+set.seed(222)
+
+sem_plot <- tidygraph::tbl_graph(data_plot$nodes, data_plot$edges) %>% 
+  ggraph::ggraph(layout = 'graphopt') +
+  # Correlation
+  ggraph::geom_edge_arc(aes(alpha = as.numeric(Type == "Correlation"),
+                    label = Label_Correlation,
+                    color = Coefficient),
+                    strength = 0.2,
+                    edge_width = 0.5,
+                    label_size = 2.1,
+                    label_dodge = unit(2, "mm"),
+                    linetype = 2, angle_calc = "along",
+                    start_cap = ggraph::circle(0, 'mm'), end_cap = ggraph::circle(0, 'mm')) +
+  ggraph::geom_edge_link(aes(alpha = as.numeric(Type == "Regression"),
+                     label = Label_Regression,
+                     color = Coefficient),
+                     label_dodge = unit(2, "mm"),
+                     angle_calc = "along", 
+                     edge_width = 0.9,
+                     label_size = 2.7,
+                     #check_overlap = TRUE,
+                     arrow = arrow(type = "closed", length = unit(3, "mm")),
+                     start_cap = ggraph::circle(0, 'mm'), end_cap = ggraph::circle(-12, 'mm')) +
+   ggraph::geom_node_point(aes(colour = Name, size = Latent)) +
+  ggraph::geom_node_text(aes(label = Name), size = 3)  +
+  ggraph::scale_edge_colour_gradient2(
+    guide = FALSE,
+    high = "#4CAF50",
+    mid = "#FFF9C4",
+    low = "#E91E63"
+  ) +
+  scale_alpha(guide = FALSE, range = c(0, 1)) +
+  scale_size_manual(values=c("TRUE"=33, "FALSE"=22)) +
+  scale_color_manual(values=c(
+    #""="#E91E63", 
+    #""="#EC407A", 
+    "Fake News\nBelief"="#f58caf", 
+    "Fake News \nFamiliarity"="#f7bace", 
+    #""="#F8BBD0",
+                                  
+    "Measure\nCompliance"="#FF3300", 
+    "Reading from\nShared Links"="#fcd397", 
+    "Frequency\nof Reading\nNews"="#f7bf6d",
+    "Government\nOpinions"="#FF6600", 
+
+    "Real News\nBelief"="#63d10f", 
+    #""="#66BB6A", 
+    "Q4"="#81C784", 
+    "Real News \nFamiliarity"="#9be663", 
+    "Q23"="#C8E6C9",
+                              
+    "Paranormal\nBeliefs"="#2196F3", 
+    "Disorganized"="#64B5F6", 
+    "Religiosity"="#4FC3F7", 
+
+    "Negative\nAffect"="#a88ade", 
+    "Intolerance to\nDiscomfort"="#9575CD",
+    "Sensitivity"="#BA68C8")) +
+  ggraph::scale_edge_alpha(guide = FALSE, range = c(0, 1)) +
+  scale_x_continuous(expand = expansion(c(0.07, 0.07))) +
+  scale_y_continuous(expand = expansion(c(0.07, 0.07))) +
+  ggraph::theme_graph() +
+  theme(legend.position = "none")
+sem_plot
+ggsave("figures/sem_plot.png", sem_plot, height=figheight*1.2, width=figwidth, dpi=600)
+```
