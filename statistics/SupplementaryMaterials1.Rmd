@@ -265,8 +265,8 @@ df_time <- df_complete %>%
 # Compute highest density intervals
 ci <- bayestestR::eti(df_time$Duration, ci = c(0.8, 0.9, 0.95, 0.99))
 cat(paste0("Duration Intervals:\n", paste0("  - ", insight::format_ci(ci$CI_low, ci$CI_high, ci$CI / 100), collapse = "\n")))
-upper_limit <- ci[ci$CI == 90, "CI_high"]
-lower_limit <- ci[ci$CI == 90, "CI_low"]
+upper_limit <- ci[ci$CI == 0.9, "CI_high"]
+lower_limit <- ci[ci$CI == 0.9, "CI_low"]
 
 # Estimates
 mode_duration <- bayestestR::map_estimate(df_time$Duration)
@@ -1304,7 +1304,7 @@ pca_kable$Variable[which(pca_kable$Variable == "PANAS_NegativTrait")] <- "PANAS_
 
 # kableExtra::kbl(pca_kable, align = "c") %>% 
 #   kableExtra::kable_classic(full_width = F) %>%
-#   kableExtra::footnote(general = "RC1: Disorganized Thoughts and Behaviours, RC2: Paranormal Beliefs, RC6: Religiosity, RC5: Negative Affect, RC3: Sensitivity, RC4: Intolerance to Discomfort") %>% 
+#   kableExtra::footnote(general = "RC1: Disorganized Thoughts and Behaviours, RC2: Paranormal Beliefs, RC6: Religiosity, RC5: Negative Affect, RC3: Sensitivity, RC4: Anxiety") %>% 
 #   kableExtra::save_kable("figures/pca_table.png", zoom = 1.5)
 
 write.csv(pca_kable, "figures/pca_table.csv", na="", row.names=F)
@@ -1312,7 +1312,7 @@ write.csv(pca_kable, "figures/pca_table.csv", na="", row.names=F)
 
 #### Dataframe with Predicted Scores
 ```{r warning=FALSE, message=FALSE}
-scores <- predict(pca, names=c("Disorganized", "Paranormal_Beliefs", "Religiosity", "Negative_Affect", "Sensitivity", "Intolerance_Discomfort"))
+scores <- predict(pca, names=c("Disorganized", "Paranormal_Beliefs", "Religiosity", "Negative_Affect", "Sensitivity", "Anxiety"))
 scores$Participant <- paste0("S", 1:nrow(scores))
 
 df_scores <- merge(df_long, scores, by="Participant")
@@ -1427,33 +1427,33 @@ modelbased::estimate_link(model_sensitivity, target=c("Type", "Sensitivity")) %>
 ```
 Sensitivity has marginal significant effect on the belief of Fake News.
 
-#### Intolerance to Discomfort
+#### Anxiety
 
 ```{r warning=FALSE, message=FALSE}
-model_intolerance <- glmmTMB(News_Belief ~ Type / Intolerance_Discomfort + News_Familiarity + (1+Type|Participant) + (1|Dataset) + (1|News_Item), data = df_scores)
+model_anxiety <- glmmTMB(News_Belief ~ Type / Anxiety + News_Familiarity + (1+Type|Participant) + (1|Dataset) + (1|News_Item), data = df_scores)
 
-model_parameters(model_intolerance)
-r2(model_intolerance)
+model_parameters(model_anxiety)
+r2(model_anxiety)
 
-modelbased::estimate_link(model_intolerance, target=c("Type", "Intolerance_Discomfort")) %>%
- ggplot(aes(x=Intolerance_Discomfort, y=Predicted)) +
+modelbased::estimate_link(model_anxiety, target=c("Type", "Anxiety")) %>%
+ ggplot(aes(x=Anxiety, y=Predicted)) +
  geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill=Type), alpha=0.33) +
  geom_line(aes(color=Type), size = 1) +
  theme_modern() +
  ylab("Reality Belief") +
- xlab("Intolerance to Discomfort") +
- ggtitle("Effect of Intolerance to Discomfort on Reality Perception") + 
+ xlab("Anxiety") +
+ ggtitle("Effect of Anxiety on Reality Perception") + 
  scale_color_manual(values=colors_fakereal) +
  scale_fill_manual(values=colors_fakereal)
 ```
-Intolerance to Discomfort has a significant positive effect on the belief of both Real News and Fake News where individuals with higher level of intolerance to discomfort are more likely to believe in news in general.
+Anxiety has a significant positive effect on the belief of both Real News and Fake News where individuals with higher level of anxiety are more likely to believe in news in general.
 
 # SEM
 ```{r warning=FALSE, message=FALSE}
 
 df_sem <- df_scores %>% 
   group_by(Participant, Type, Dataset) %>% 
-  select(Participant, Dataset, Type, News_Belief, Disorganized, Paranormal_Beliefs, Religiosity, Sensitivity, Intolerance_Discomfort, Negative_Affect, News_Familiarity, starts_with("Measure"), starts_with("Gov"), Education, starts_with("COVID_"), starts_with("Impact"), Frequency_COVID, SourcOfficialSites, SourcSharedLinks, SourcNewspaper) %>% 
+  select(Participant, Dataset, Type, News_Belief, Disorganized, Paranormal_Beliefs, Religiosity, Sensitivity, Anxiety, Negative_Affect, News_Familiarity, starts_with("Measure"), starts_with("Gov"), Education, starts_with("COVID_"), starts_with("Impact"), Frequency_COVID, SourcOfficialSites, SourcSharedLinks, SourcNewspaper) %>% 
   select(-COVID_Diagnosis) %>% 
   summarise_all(mean, na.rm=TRUE) %>%
   pivot_wider(names_from = Type, values_from = c(News_Belief, News_Familiarity)) %>% 
@@ -1465,9 +1465,9 @@ df_sem <- df_scores %>%
 # Adding News_Familiarity, Measures, Gov, Impact as predictors of Belief
 sem_model <- '
   # regressions
-  Belief_FakeNews ~ Disorganized + Religiosity + Paranormal_Beliefs + Negative_Affect + Sensitivity + Intolerance_Discomfort + Familiarity_FakeNews + Gov_G + Frequency_COVID + SourcOfficialSites + SourcSharedLinks
+  Belief_FakeNews ~ Disorganized + Religiosity + Paranormal_Beliefs + Negative_Affect + Sensitivity + Anxiety + Familiarity_FakeNews + Gov_G + Frequency_COVID + SourcOfficialSites + SourcSharedLinks
 
-  Belief_RealNews ~ Sensitivity + Intolerance_Discomfort + Familiarity_RealNews + Gov_G 
+  Belief_RealNews ~ Sensitivity + Anxiety + Familiarity_RealNews + Gov_G 
 
   MeasureG ~ Belief_FakeNews + Belief_RealNews +  Gov_G + Frequency_COVID
 
@@ -1484,7 +1484,7 @@ sem_model2 <- '
   # regressions
   Belief_FakeNews ~ Paranormal_Beliefs + Negative_Affect + Familiarity_FakeNews + Frequency_COVID + SourcSharedLinks
 
-  Belief_RealNews ~ Intolerance_Discomfort + Familiarity_RealNews + Gov_G
+  Belief_RealNews ~ Anxiety + Familiarity_RealNews + Gov_G
 
   MeasureG ~ Belief_RealNews + Gov_G + Frequency_COVID
 
@@ -1553,8 +1553,6 @@ data_plot$nodes <- mutate(data_plot$nodes,
   Name =
   str_replace(Name, "Belief_RealNews", "Real News\nBelief"),
   Name =
-  str_replace(Name, "Intolerance_Discomfort", "Intolerance to\nDiscomfort"),
-  Name =
   str_replace(Name, "Impact_G", "Personal\nImpact"),
   Name =
   str_replace(Name, "Belief_FakeNews", "Fake News\nBelief"),
@@ -1575,7 +1573,6 @@ data_plot$edges <- mutate(data_plot$edges,
   from = str_replace(from, "Gov_G", "Government\nOpinions"),
   from = str_replace(from, "Familiarity_RealNews", "Real News \nFamiliarity"),
   from = str_replace(from, "Belief_RealNews", "Real News\nBelief"),
-  from = str_replace(from, "Intolerance_Discomfort", "Intolerance to\nDiscomfort"),
   from = str_replace(from, "Impact_G", "Personal\nImpact"),
   from = str_replace(from, "Belief_FakeNews", "Fake News\nBelief"),
   from = str_replace(from, "MeasureG", "Measure\nCompliance"),
@@ -1590,7 +1587,6 @@ data_plot$edges <- mutate(data_plot$edges,
   to = str_replace(to, "Gov_G", "Government\nOpinions"),
   to = str_replace(to, "Familiarity_RealNews", "Real News \nFamiliarity"),
   to = str_replace(to, "Belief_RealNews", "Real News\nBelief"),
-  to = str_replace(to, "Intolerance_Discomfort", "Intolerance to\nDiscomfort"),
   to = str_replace(to, "Impact_G", "Personal\nImpact"),
   to = str_replace(to, "Belief_FakeNews", "Fake News\nBelief"),
   to =
@@ -1612,7 +1608,7 @@ set.seed(222)
 sem_plot <- tidygraph::tbl_graph(data_plot$nodes, data_plot$edges) %>% 
   ggraph::ggraph(layout = 'graphopt') +
   # Correlation
-  ggraph::geom_edge_arc(aes(alpha = as.numeric(Type == "Correlation"),
+  ggraph::geom_edge_arc(aes(alpha = as.numeric(Component == "Correlation"),
                     label = Label_Correlation,
                     color = Coefficient),
                     strength = 0.2,
@@ -1621,7 +1617,7 @@ sem_plot <- tidygraph::tbl_graph(data_plot$nodes, data_plot$edges) %>%
                     label_dodge = unit(2, "mm"),
                     linetype = 2, angle_calc = "along",
                     start_cap = ggraph::circle(0, 'mm'), end_cap = ggraph::circle(0, 'mm')) +
-  ggraph::geom_edge_link(aes(alpha = as.numeric(Type == "Regression"),
+  ggraph::geom_edge_link(aes(alpha = as.numeric(Component == "Regression"),
                      label = Label_Regression,
                      color = Coefficient),
                      label_dodge = unit(2, "mm"),
@@ -1664,7 +1660,7 @@ sem_plot <- tidygraph::tbl_graph(data_plot$nodes, data_plot$edges) %>%
     "Religiosity"="#4FC3F7", 
 
     "Negative\nAffect"="#a88ade", 
-    "Intolerance to\nDiscomfort"="#9575CD",
+    "Anxiety"="#9575CD",
     "Sensitivity"="#BA68C8")) +
   ggraph::scale_edge_alpha(guide = FALSE, range = c(0, 1)) +
   scale_x_continuous(expand = expansion(c(0.07, 0.07))) +
